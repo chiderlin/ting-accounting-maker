@@ -1,8 +1,9 @@
 "use client";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import { plate, capGeometry } from "./geometry";
+import { materialPreset } from "./presets";
 export const PARTS = [
   "Bottom Case",
   "PCB",
@@ -49,12 +50,12 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
   const mats = useMemo(
     () => ({
       ivory: new THREE.MeshStandardMaterial({
-        color: "#d5cfbb",
+        color: materialPreset.ivory,
         roughness: s.roughness,
         wireframe: s.wire,
       }),
       pcb: new THREE.MeshStandardMaterial({
-        color: "#3c5144",
+        color: materialPreset.pcb,
         roughness: 0.78,
         wireframe: s.wire,
       }),
@@ -64,9 +65,9 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
         wireframe: s.wire,
       }),
       metal: new THREE.MeshStandardMaterial({
-        color: "#a7a99f",
+        color: materialPreset.metal,
         metalness: 0.95,
-        roughness: 0.36,
+        roughness: materialPreset.metalRoughness,
         wireframe: s.wire,
       }),
       gold: new THREE.MeshStandardMaterial({
@@ -75,9 +76,10 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
         roughness: 0.45,
         wireframe: s.wire,
       }),
+      lcd: new THREE.MeshPhysicalMaterial({color:"#8b9b70",roughness:.28,clearcoat:.65,wireframe:s.wire}),
       frost: new THREE.MeshPhysicalMaterial({
-        color: "#e0ddcd",
-        roughness: 0.28,
+        color: materialPreset.frost,
+        roughness: materialPreset.frostRoughness,
         transmission: s.transmission,
         thickness: 0.18,
         ior: 1.46,
@@ -88,6 +90,8 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
     }),
     [s.roughness, s.wire, s.transmission],
   );
+  useEffect(() => () => { Object.values(geo).forEach(g => g.dispose()); }, [geo]);
+  useEffect(() => () => { Object.values(mats).forEach(m => m.dispose()); }, [mats]);
   function box(
     name: string,
     p: [number, number, number],
@@ -193,20 +197,23 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
             material={mats.pcb}
             receiveShadow
           />
-          {Array.from({ length: 18 }, (_, i) =>
-            box(
-              `trace-${i}`,
-              [-1.75 + i * 0.2, 0.515, 0],
-              [0.013, 0.008, 3.55],
-              mats.gold,
-              0.002,
-            ),
-          )}
+          {Array.from({length:18},(_,i)=>{
+            const x=-1.75+i*.19, z=-1.65+(i%5)*.23;
+            const points=[new THREE.Vector3(x,.515,-1.85),new THREE.Vector3(x,.515,z),new THREE.Vector3(x+.13,.515,z+.13),new THREE.Vector3(x+.13,.515,1.7)];
+            return <group key={i}>
+              {points.slice(1).map((end,j)=>{
+                const start=points[j], mid=start.clone().add(end).multiplyScalar(.5);
+                return <mesh key={j} position={mid} rotation={[0,Math.atan2(end.x-start.x,end.z-start.z),0]} material={mats.gold}><boxGeometry args={[.012,.006,start.distanceTo(end)]}/></mesh>;
+              })}
+              <mesh position={points[3]} material={mats.gold}><cylinderGeometry args={[.035,.035,.012,16]}/></mesh>
+            </group>;
+          })}
           {[-1, 1].flatMap((x) =>
             [-1, 1].map((z) => (
               <mesh
                 key={`${x}${z}`}
                 position={[x * 1.72, 0.53, z * 1.8]}
+                rotation={[-Math.PI / 2, 0, 0]}
                 material={mats.gold}
               >
                 <torusGeometry args={[0.08, 0.015, 8, 24]} />
@@ -268,16 +275,13 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
             "LCD glass",
             [-0.64, 1.02, -1.38],
             [1.83, 0.025, 0.63],
-            new THREE.MeshPhysicalMaterial({
-              color: "#8b9b70",
-              roughness: 0.23,
-              clearcoat: 1,
-              wireframe: s.wire,
-            }),
+            mats.lcd,
             0.04,
           )}
-          {label("READY_   01", [-0.64, 1.105, -1.45], 1.5)}
-          {label("AI / AUTOMATION", [-0.64, 1.105, -1.22], 1.44)}
+          <group name="lcd-ready">{label("READY_   01", [-0.64, 1.037, -1.45], 1.5)}</group>
+          <group name="lcd-test" visible={false}>{label("8888 / TEST", [-0.64, 1.037, -1.45], 1.5)}</group>
+          <group name="lcd-start" visible={false}>{label("BOOTING...", [-0.64, 1.037, -1.45], 1.5)}</group>
+          {label("AI / AUTOMATION", [-0.64, 1.037, -1.22], 1.44)}
         </>,
       )}
       {group(
@@ -338,6 +342,7 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
           <mesh material={mats.dark}>
             <cylinderGeometry args={[0.43, 0.43, 0.2, 64]} />
           </mesh>
+          <group name="rotary-cap">
           <mesh material={mats.metal} position={[0, 0.25, 0]} castShadow>
             <cylinderGeometry args={[0.36, 0.38, 0.4, 96]} />
           </mesh>
@@ -363,6 +368,7 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
             mats.dark,
             0.005,
           )}
+          </group>
         </group>,
       )}
       {group(
@@ -414,10 +420,10 @@ function Label({
     c.width = Math.max(256, text.length * 72);
     c.height = 160;
     const ctx = c.getContext("2d")!;
-    ctx.clearRect(0, 0, 1024, 160);
+    ctx.clearRect(0, 0, c.width, c.height);
     if (bg !== "transparent") {
       ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, 1024, 160);
+      ctx.fillRect(0, 0, c.width, c.height);
     }
     ctx.fillStyle = color;
     ctx.font = 'bold 100px monospace';
@@ -429,6 +435,7 @@ function Label({
     t.colorSpace = THREE.SRGBColorSpace;
     return t;
   }, [text, color, bg]);
+  useEffect(() => () => tex.dispose(), [tex]);
   return (
     <mesh position={position} rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[width, (width * 160) / Math.max(256, text.length * 72)]} />

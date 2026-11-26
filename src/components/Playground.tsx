@@ -1,12 +1,16 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useState } from "react";
+import { StudioController } from "./motion/core";
+import { makerProfile } from "./motion/makerProfile";
+import AnimationStudio from "./motion/AnimationStudio";
 import { PARTS, type Settings } from "./MakerConsole";
 const Scene = dynamic(() => import("./Scene"), {
   ssr: false,
   loading: () => <div className="loading">Preparing the studio…</div>,
 });
 export default function Playground() {
+  const [controller] = useState(() => new StudioController(makerProfile));
   const [s, set] = useState<Settings>({
     wire: false,
     roughness: 0.63,
@@ -33,7 +37,7 @@ export default function Playground() {
             </h1>
             <p>A small instrument for big ideas.</p>
           </div>
-          <Scene settings={s} view={view} />
+          <Scene settings={s} view={view} controller={controller} />
           <div className="caption">
             <span>
               PROCEDURAL SERIES
@@ -130,6 +134,7 @@ export default function Playground() {
               </label>
             ))}
           </section>
+          <AnimationStudio controller={controller} />
           <div className="note">
             BUILT TO BE TAKEN APART.
             <br />

@@ -8,19 +8,16 @@ import {
 } from "@react-three/drei";
 import { useEffect, useRef } from "react";
 import type { OrbitControls as Controls } from "three-stdlib";
+import MotionRig from "./motion/MotionRig";
+import { makerProfile } from "./motion/makerProfile";
+import type { StudioController } from "./motion/core";
+import { cameraPresets, studioPreset } from "./presets";
 import MakerConsole, { type Settings } from "./MakerConsole";
 function Camera({ view }: { view: { name: string; id: number } }) {
   const { camera, invalidate } = useThree();
   const ref = useRef<Controls>(null);
   useEffect(() => {
-    const positions: Record<string, [number, number, number]> = {
-      "45°": [7, 8, 9],
-      Front: [0, 5, 11],
-      Side: [11, 3, 0],
-      Back: [0, 4, -11],
-      Top: [0, 13, 0.01],
-      Bottom: [0, -11, 0.01],
-    };
+    const positions = cameraPresets;
     camera.position.set(...positions[view.name]);
     ref.current?.target.set(0, 0.65, 0);
     ref.current?.update();
@@ -31,7 +28,7 @@ function Camera({ view }: { view: { name: string; id: number } }) {
       ref={ref}
       makeDefault
       minDistance={5}
-      maxDistance={20}
+      maxDistance={30}
       enablePan={false}
     />
   );
@@ -39,8 +36,10 @@ function Camera({ view }: { view: { name: string; id: number } }) {
 export default function Scene({
   settings,
   view,
+  controller,
 }: {
   settings: Settings;
+  controller: StudioController;
   view: { name: string; id: number };
 }) {
   return (
@@ -58,13 +57,15 @@ export default function Scene({
       }
     >
       <color attach="background" args={["#eeece5"]} />
-      <ambientLight intensity={0.4 * settings.light} />
+      <ambientLight intensity={studioPreset.ambient * settings.light} />
       <directionalLight
         position={[-3, 8, 5]}
-        intensity={2.5 * settings.light}
+        intensity={studioPreset.key * settings.light}
         castShadow
         shadow-mapSize={[2048, 2048]}
       />
+      <directionalLight position={[5,4,1]} intensity={studioPreset.fill * settings.light} />
+      <directionalLight position={[0,5,-6]} intensity={studioPreset.rim * settings.light} />
       <Environment resolution={256}>
         <Lightformer
           position={[-5, 5, 2]}
@@ -85,7 +86,9 @@ export default function Scene({
           intensity={settings.light}
         />
       </Environment>
-      <MakerConsole settings={settings} />
+      <MotionRig controller={controller} profile={makerProfile}>
+        <MakerConsole settings={settings} />
+      </MotionRig>
       <ContactShadows
         position={[0, -0.03, 0]}
         opacity={0.38}

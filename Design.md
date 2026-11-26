@@ -185,3 +185,7 @@ Do not substitute the primary exploded-view experience with static images, GIFs,
 5. Integrate the approved scene into the landing page.
 6. Implement supporting interactions and responsive layouts.
 7. Complete performance and accessibility testing.
+
+## Task 002 implementation candidate
+
+The standalone playground adds a profile-based motion controller, component registry and timeline, with independent key and rotary-cap control, LCD boot stages and scrubber. Presets are shared in presets.ts. The original landing-page motion requirements above remain unchanged; studio M01–M06 are defined separately in task2.md. See MOTION.md for pending visual and runtime checks.
