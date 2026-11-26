@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { StudioController } from "./motion/core";
 import { makerProfile } from "./motion/makerProfile";
+import type { ExhibitId } from "./CollectionModels";
 import type { Settings } from "./MakerConsole";
 import styles from "./Landing.module.css";
 
@@ -10,12 +11,18 @@ const Scene = dynamic(() => import("./Scene"), { ssr: false, loading: () => <div
 const settings: Settings = { wire:false, roughness:.63, transmission:.62, light:1, hidden:[] };
 const view = { name:"45°", id:0 };
 const exhibits = [
+  { id:"001", name:"Maker Console", note:"Accounting · Automation · AI", description:"A small instrument for big ideas." },
   { id:"002", name:"Game Boy", note:"Curiosity / Assembly", description:"Taking retro technology apart and putting it back together." },
   { id:"003", name:"Leather journal", note:"Craft / Patience", description:"Making something tangible, one detail at a time." },
   { id:"004", name:"Film camera", note:"Observation / Memory", description:"Finding another perspective through vintage photography." },
 ];
 export default function Landing() {
   const [controller] = useState(() => new StudioController(makerProfile));
+  const [active, setActive] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const touch = useRef<{x:number;y:number}|null>(null);
+  const select = (index:number) => { if(index<0 || index>=exhibits.length || index===active) return; setDirection(index>active?1:-1);setActive(index); };
+  const object = exhibits[active];
   const chapter = useRef<HTMLElement>(null);
   const indicator = useRef<HTMLSpanElement>(null);
   const stageLabel = useRef<HTMLSpanElement>(null);
@@ -33,7 +40,7 @@ export default function Landing() {
       const explode = media.matches ? 0 : Math.max(0, Math.min(1, (progress - .08) / .72));
       controller.setProgress(explode);
       if (indicator.current) indicator.current.style.transform = "scaleX(" + progress + ")";
-      if (stageLabel.current) stageLabel.current.textContent = explode < .01 ? "ASSEMBLED" : explode > .99 ? "EXPLODED VIEW" : "EXPLORING STRUCTURE";
+      if (stageLabel.current) stageLabel.current.textContent = explode < .01 ? "ON DISPLAY" : explode > .99 ? "EXPLORED" : "EXPLORING STRUCTURE";
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
     const preference = () => { setReduced(media.matches); schedule(); };
@@ -51,14 +58,15 @@ export default function Landing() {
         <span className={styles.navCaption}>INDEPENDENT MAKER / PERSONAL ARCHIVE</span>
         <nav aria-label="Main navigation"><a href="#about">About</a><a href="#work">Work</a><a href="#collection">Objects</a><a href="#contact">Contact ↗</a></nav>
       </header>
-      <section ref={chapter} className={styles.chapter} aria-label="Object 001 interactive exhibition">
-        <div className={styles.sticky}>
-          <div className={styles.heroMeta}><span>EXHIBITION / 01</span><span ref={stageLabel}>ASSEMBLED</span></div>
+      <section ref={chapter} className={styles.chapter} aria-label="Interactive object exhibition">
+        <div className={styles.sticky} onTouchStart={e=>{const t=e.touches[0];touch.current={x:t.clientX,y:t.clientY};}} onTouchEnd={e=>{const start=touch.current;touch.current=null;if(!start)return;const t=e.changedTouches[0],dx=t.clientX-start.x,dy=t.clientY-start.y;if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5)select(active+(dx<0?1:-1));}}>
+          <div className={styles.heroMeta}><span>EXHIBITION / {object.id}</span><span ref={stageLabel}>ASSEMBLED</span></div>
           <h1 className={styles.heroTitle}>The maker’s<br/>studio<span>.</span></h1>
           <div className={styles.canvas}>
-            <Scene settings={settings} view={view} controller={controller} exhibition />
+            <div className={styles.slide} key={active} data-direction={direction}><Scene settings={settings} view={view} controller={controller} exhibition exhibit={active===0?undefined:object.id as ExhibitId}/></div>
           </div>
-          <div className={styles.objectLabel}><span>OBJECT — 001</span><strong>Maker Console</strong><span>Accounting × Automation × AI</span></div>
+          <div className={styles.objectLabel} aria-live="polite"><span>OBJECT — {object.id}</span><strong>{object.name}</strong><span>{object.note}</span></div>
+          <div className={styles.galleryControls} aria-label="Choose exhibit"><button aria-label="Previous object" disabled={active===0} onClick={()=>select(active-1)}>←</button>{exhibits.map((item,i)=><button key={item.id} aria-label={item.name} aria-pressed={active===i} onClick={()=>select(i)}>{item.id}</button>)}<button aria-label="Next object" disabled={active===exhibits.length-1} onClick={()=>select(active+1)}>→</button></div>
           <div className={styles.hints}><span>{reduced ? "STATIC EXHIBITION" : "DRAG TO ROTATE"}</span><a href="#about">SCROLL TO EXPLORE ↓</a></div>
           <div className={styles.progress} aria-hidden="true"><span ref={indicator}/></div>
         </div>
@@ -83,8 +91,7 @@ export default function Landing() {
         <div className={styles.sectionIndex}>03 / PERSONAL ARCHIVE</div>
         <h2>Objects of<br/>curiosity<span>.</span></h2>
         <p className={styles.intro}>A growing collection of things I love to make, take apart and observe.</p>
-        <article className={styles.currentObject}><span>OBJECT 001 / ON DISPLAY</span><h3>Maker Console</h3><a href="#top">Explore the object ↗</a></article>
-        <div className={styles.archive}>{exhibits.map(exhibit=><article key={exhibit.id}><span>OBJECT {exhibit.id} / PLANNED</span><strong>{exhibit.id}</strong><h3>{exhibit.name}</h3><span>{exhibit.note}</span><p>{exhibit.description}</p></article>)}</div>
+        <div className={styles.archive}>{exhibits.map((exhibit,i)=><article key={exhibit.id}><span>OBJECT {exhibit.id}</span><strong>{exhibit.id}</strong><h3>{exhibit.name}</h3><span>{exhibit.note}</span><p>{exhibit.description}</p><a href="#top" onClick={()=>select(i)}>Explore object ↗</a></article>)}</div>
       </section>
       <section id="contact" className={styles.contact}>
         <div className={styles.sectionIndex}>04 / COLLABORATION</div>
