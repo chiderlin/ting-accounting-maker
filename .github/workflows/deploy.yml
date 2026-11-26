@@ -1,7 +1,7 @@
 name: Deploy TING to GitHub Pages
 on:
   push:
-    branches: [task3-landing-page]
+    branches: [task4-object-collection]
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
-    if: github.ref == 'refs/heads/task3-landing-page'
+    if: github.ref == 'refs/heads/task4-object-collection'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
