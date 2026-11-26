@@ -1,5 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useState } from "react";
 import { StudioController } from "./motion/core";
 import { makerProfile } from "./motion/makerProfile";
@@ -22,9 +23,9 @@ export default function Playground() {
   return (
     <main>
       <header>
-        <a href="/playground" className="brand">
+        <Link href="/playground" className="brand">
           m<span>↗</span> / object lab
-        </a>
+        </Link>
         <span className="edition">INDEPENDENT DESIGN STUDIES — VOL. 001</span>
         <span className="status">● LIVE STUDIO</span>
       </header>
