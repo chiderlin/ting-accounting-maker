@@ -34,7 +34,8 @@ function Camera({ view, exhibition, controller, exhibit }: { view: { name: strin
   const ref = useRef<Controls>(null);
   useEffect(() => {
     const positions = cameraPresets;
-    camera.position.set(...(exhibit === "004" ? [7, 5, 10] as const : positions[view.name]));
+    const [x, y, z] = exhibit === "004" ? [7, 5, 10] : positions[view.name];
+    camera.position.set(x, y, z);
     ref.current?.target.set(0, 0.65, 0);
     ref.current?.update();
     invalidate();
