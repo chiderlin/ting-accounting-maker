@@ -13,16 +13,17 @@ import { makerProfile } from "./motion/makerProfile";
 import type { StudioController } from "./motion/core";
 import { cameraPresets, studioPreset } from "./presets";
 import MakerConsole, { type Settings } from "./MakerConsole";
-function Camera({ view }: { view: { name: string; id: number } }) {
+function Camera({ view, exhibition }: { view: { name: string; id: number }; exhibition: boolean }) {
   const { camera, invalidate } = useThree();
   const ref = useRef<Controls>(null);
   useEffect(() => {
     const positions = cameraPresets;
     camera.position.set(...positions[view.name]);
+    if (exhibition) camera.position.multiplyScalar(1.35);
     ref.current?.target.set(0, 0.65, 0);
     ref.current?.update();
     invalidate();
-  }, [view, camera, invalidate]);
+  }, [view, camera, invalidate, exhibition]);
   return (
     <OrbitControls
       ref={ref}
@@ -30,6 +31,7 @@ function Camera({ view }: { view: { name: string; id: number } }) {
       minDistance={5}
       maxDistance={30}
       enablePan={false}
+      enableZoom={!exhibition}
     />
   );
 }
@@ -37,8 +39,10 @@ export default function Scene({
   settings,
   view,
   controller,
+  exhibition = false,
 }: {
   settings: Settings;
+  exhibition?: boolean;
   controller: StudioController;
   view: { name: string; id: number };
 }) {
@@ -56,7 +60,7 @@ export default function Scene({
         </p>
       }
     >
-      <color attach="background" args={["#eeece5"]} />
+      <color attach="background" args={[exhibition ? "#F4F3EE" : "#eeece5"]} />
       <ambientLight intensity={studioPreset.ambient * settings.light} />
       <directionalLight
         position={[-3, 8, 5]}
@@ -97,7 +101,7 @@ export default function Scene({
         far={5}
         frames={1}
       />
-      <Camera view={view} />
+      <Camera view={view} exhibition={exhibition} />
     </Canvas>
   );
 }
