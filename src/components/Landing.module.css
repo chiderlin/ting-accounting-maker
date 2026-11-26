@@ -59,3 +59,13 @@
 @media(max-width:1000px){.galleryControls{gap:3px}.galleryControls button{padding:8px 5px;font-size:10px}.archive{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.galleryControls{top:auto;bottom:15vh;left:auto;right:5vw}.canvas{inset:25vh 0 24vh}.objectLabel{bottom:7vh}.objectLabel strong{font-size:24px}.archive{grid-template-columns:1fr}.galleryControls button{padding:8px 7px}.hints{bottom:2vh}}
 @media(prefers-reduced-motion:reduce){.slide{animation:none}}
+
+/* Archive thumbnails are still captures of the actual exhibition meshes. */
+.archive{position:relative;align-items:start}
+.archive article{grid-template-rows:auto auto auto auto 1fr auto;height:100%}
+.archive .archivePreview{display:block;position:relative;aspect-ratio:4/3;width:100%;border:0;padding:0;overflow:hidden;background:#f4f3ee;justify-self:stretch}
+.previewImage{width:100%;height:100%;background-size:contain;background-repeat:no-repeat;background-position:center;transition:transform .35s ease}
+.archivePreview:hover .previewImage{transform:scale(1.045)}
+.previewPlaceholder{position:absolute;inset:0;display:grid;place-items:center;font:11px ui-monospace,monospace;color:#777970}
+.captureStage{position:absolute;top:0;left:0;width:480px;height:360px;opacity:0;pointer-events:none;overflow:hidden}
+@media(prefers-reduced-motion:reduce){.previewImage{transition:none}}
