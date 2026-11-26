@@ -8,21 +8,22 @@ import {
 } from "@react-three/drei";
 import { useEffect, useRef } from "react";
 import type { OrbitControls as Controls } from "three-stdlib";
+import CollectionModel, { type ExhibitId } from "./CollectionModels";
 import MotionRig from "./motion/MotionRig";
 import { makerProfile } from "./motion/makerProfile";
 import type { StudioController } from "./motion/core";
 import { cameraPresets, studioPreset } from "./presets";
 import MakerConsole, { type Settings } from "./MakerConsole";
-function Camera({ view, exhibition, controller }: { view: { name: string; id: number }; exhibition: boolean; controller: StudioController }) {
+function Camera({ view, exhibition, controller, exhibit }: { view: { name: string; id: number }; exhibition: boolean; controller: StudioController; exhibit?: ExhibitId }) {
   const { camera, invalidate, size } = useThree();
   const ref = useRef<Controls>(null);
   useEffect(() => {
     const positions = cameraPresets;
-    camera.position.set(...positions[view.name]);
+    camera.position.set(...(exhibit === "004" ? [7, 5, 10] as const : positions[view.name]));
     ref.current?.target.set(0, 0.65, 0);
     ref.current?.update();
     invalidate();
-  }, [view, camera, invalidate]);
+  }, [view, camera, invalidate, exhibit]);
   useEffect(() => {
     if (!exhibition) return;
     const orbit = ref.current;
@@ -32,16 +33,16 @@ function Camera({ view, exhibition, controller }: { view: { name: string; id: nu
       const blend = progress * progress * (3 - 2 * progress);
       const aspect = size.width / Math.max(1, size.height);
       const aspectFit = Math.max(1, 1 / Math.max(.5, aspect));
-      const radius = Math.hypot(...cameraPresets[view.name]) * (.84 + .43 * blend) * aspectFit;
+      const radius = (exhibit ? 12.5 + (exhibit === "003" ? 4 : 5) * blend : Math.hypot(...cameraPresets[view.name]) * (.84 + .43 * blend)) * aspectFit;
       const direction = camera.position.clone().sub(orbit.target).normalize();
-      orbit.target.set(0, .65 + 1.8 * blend, 0);
+      orbit.target.set(exhibit === "003" ? -.8 * blend : 0, exhibit === "004" ? 1.2 + .4 * blend : .65 + 1.8 * blend, exhibit === "004" ? 1.1 * blend : 0);
       camera.position.copy(orbit.target).addScaledVector(direction, Math.min(radius, 29));
       orbit.update();
       invalidate();
     };
     frame();
     return controller.subscribe(frame);
-  }, [camera, controller, exhibition, invalidate, size.width, size.height, view]);
+  }, [camera, controller, exhibition, invalidate, size.width, size.height, view, exhibit]);
   return (
     <OrbitControls
       ref={ref}
@@ -58,9 +59,11 @@ export default function Scene({
   view,
   controller,
   exhibition = false,
+  exhibit,
 }: {
   settings: Settings;
   exhibition?: boolean;
+  exhibit?: ExhibitId;
   controller: StudioController;
   view: { name: string; id: number };
 }) {
@@ -108,9 +111,9 @@ export default function Scene({
           intensity={settings.light}
         />
       </Environment>
-      <MotionRig controller={controller} profile={makerProfile}>
+      {exhibit ? <CollectionModel key={exhibit} id={exhibit} controller={controller}/> : <MotionRig controller={controller} profile={makerProfile}>
         <MakerConsole settings={settings} />
-      </MotionRig>
+      </MotionRig>}
       <ContactShadows
         position={[0, -0.03, 0]}
         opacity={0.38}
@@ -119,7 +122,7 @@ export default function Scene({
         far={5}
         frames={1}
       />
-      <Camera view={view} exhibition={exhibition} controller={controller} />
+      <Camera view={view} exhibition={exhibition} controller={controller} exhibit={exhibit} />
     </Canvas>
   );
 }
