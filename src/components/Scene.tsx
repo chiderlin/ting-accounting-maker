@@ -13,17 +13,35 @@ import { makerProfile } from "./motion/makerProfile";
 import type { StudioController } from "./motion/core";
 import { cameraPresets, studioPreset } from "./presets";
 import MakerConsole, { type Settings } from "./MakerConsole";
-function Camera({ view, exhibition }: { view: { name: string; id: number }; exhibition: boolean }) {
-  const { camera, invalidate } = useThree();
+function Camera({ view, exhibition, controller }: { view: { name: string; id: number }; exhibition: boolean; controller: StudioController }) {
+  const { camera, invalidate, size } = useThree();
   const ref = useRef<Controls>(null);
   useEffect(() => {
     const positions = cameraPresets;
     camera.position.set(...positions[view.name]);
-    if (exhibition) camera.position.multiplyScalar(1.35);
     ref.current?.target.set(0, 0.65, 0);
     ref.current?.update();
     invalidate();
-  }, [view, camera, invalidate, exhibition]);
+  }, [view, camera, invalidate]);
+  useEffect(() => {
+    if (!exhibition) return;
+    const orbit = ref.current;
+    if (!orbit) return;
+    const frame = () => {
+      const progress = controller.getSnapshot().progress;
+      const blend = progress * progress * (3 - 2 * progress);
+      const aspect = size.width / Math.max(1, size.height);
+      const aspectFit = Math.max(1, 1 / Math.max(.5, aspect));
+      const radius = Math.hypot(...cameraPresets[view.name]) * (.84 + .43 * blend) * aspectFit;
+      const direction = camera.position.clone().sub(orbit.target).normalize();
+      orbit.target.set(0, .65 + 1.8 * blend, 0);
+      camera.position.copy(orbit.target).addScaledVector(direction, Math.min(radius, 29));
+      orbit.update();
+      invalidate();
+    };
+    frame();
+    return controller.subscribe(frame);
+  }, [camera, controller, exhibition, invalidate, size.width, size.height, view]);
   return (
     <OrbitControls
       ref={ref}
@@ -101,7 +119,7 @@ export default function Scene({
         far={5}
         frames={1}
       />
-      <Camera view={view} exhibition={exhibition} />
+      <Camera view={view} exhibition={exhibition} controller={controller} />
     </Canvas>
   );
 }
