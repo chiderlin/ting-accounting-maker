@@ -110,8 +110,8 @@ export default function Landing() {
       <section id="about" className={styles.about}>
         <div className={styles.sectionIndex}>01 / THE PERSON BEHIND THE OBJECT</div>
         <h2>Hello,<br/>I’m Ting<span>.</span></h2>
-        <div className={styles.aboutBody}><p className={styles.lead}>Accountant.<br/>Maker.<br/>Curious mind.</p><div><p>I enjoy understanding how things work — whether it’s a retro handheld console, a leather notebook, or a financial workflow.</p><p>With five years of working experience in Japan and a background in accounting, I explore how automation and AI can make everyday work simpler. I’m currently preparing for the CPA qualification.</p><p lang="zh-Hant">喜歡親手創造，也喜歡讓繁瑣的工作變得簡單。</p></div></div>
-        <div className={styles.tags}>{["Accounting","RPA","AI exploration","Workflow optimisation","Japan experience","CPA in progress","Retro technology","Leather craft","Photography","Maker mindset"].map(tag=><span key={tag}>{tag}</span>)}</div>
+        <div className={styles.aboutBody}><p className={styles.lead}>Accountant.<br/>Maker.<br/>Curious mind.</p><div><p>I enjoy understanding how things work — whether it’s a retro handheld console, a leather notebook, or a financial workflow.</p><p>I enjoy exploring how automation and AI can make everyday work simpler.</p></div></div>
+        <div className={styles.tags}>{["Accounting","RPA","AI exploration","Workflow optimisation","Retro technology","Leather craft","Photography","Maker mindset"].map(tag=><span key={tag}>{tag}</span>)}</div>
       </section>
       <section id="work" className={styles.editorial}>
         <div className={styles.sectionIndex}>02 / PRACTICE</div>
