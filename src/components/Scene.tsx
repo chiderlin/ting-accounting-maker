@@ -1,5 +1,5 @@
 "use client";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import {
   ContactShadows,
   Environment,
@@ -14,6 +14,21 @@ import { makerProfile } from "./motion/makerProfile";
 import type { StudioController } from "./motion/core";
 import { cameraPresets, studioPreset } from "./presets";
 import MakerConsole, { type Settings } from "./MakerConsole";
+function Snapshot({onCapture}:{onCapture:(image:string)=>void}) {
+  const frames=useRef(0);
+  const pending=useRef<number|null>(null);
+  useEffect(()=>()=>{if(pending.current!==null)cancelAnimationFrame(pending.current);},[]);
+  useFrame(({gl,scene,camera,invalidate})=>{
+    gl.render(scene,camera);
+    if(frames.current++<4){invalidate();return;}
+    if(frames.current!==5)return;
+    try {
+      const image=gl.domElement.toDataURL("image/png");
+      pending.current=requestAnimationFrame(()=>onCapture(image));
+    } catch { /* Keep the accessible text fallback if capture is unavailable. */ }
+  },1);
+  return null;
+}
 function Camera({ view, exhibition, controller, exhibit }: { view: { name: string; id: number }; exhibition: boolean; controller: StudioController; exhibit?: ExhibitId }) {
   const { camera, invalidate, size } = useThree();
   const ref = useRef<Controls>(null);
@@ -60,17 +75,19 @@ export default function Scene({
   controller,
   exhibition = false,
   exhibit,
+  onCapture,
 }: {
   settings: Settings;
   exhibition?: boolean;
   exhibit?: ExhibitId;
+  onCapture?: (image:string)=>void;
   controller: StudioController;
   view: { name: string; id: number };
 }) {
   return (
     <Canvas
       shadows
-      dpr={[1, 1.75]}
+      dpr={onCapture ? 1 : [1, 1.75]}
       camera={{ position: [7, 8, 9], fov: 40 }}
       frameloop="demand"
       gl={{ antialias: true }}
@@ -123,6 +140,7 @@ export default function Scene({
         frames={1}
       />
       <Camera view={view} exhibition={exhibition} controller={controller} exhibit={exhibit} />
+      {onCapture && <Snapshot onCapture={onCapture}/>}
     </Canvas>
   );
 }
