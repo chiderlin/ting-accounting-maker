@@ -44,3 +44,18 @@
 .footer{padding:25px 8vw;background:#20211f;color:#c3c3b8;border-top:1px solid #ffffff35}
 @media(max-width:700px){.navCaption{display:none}.nav{height:60px}.nav nav{gap:12px;font-size:11px}.heroTitle{top:8vh;left:5vw;width:90%;font-size:clamp(46px,11vw,76px)}.canvas{inset:28vh 0 16vh;pointer-events:none}.objectLabel{bottom:9vh}.hints{bottom:3vh;left:5vw;right:5vw;display:flex;justify-content:space-between;text-align:left}.hints>span{visibility:hidden}.aboutBody,.archive{grid-template-columns:1fr}.workRow{grid-template-columns:30px 1fr;gap:12px}.workRow p{grid-column:2}.currentObject{grid-template-columns:1fr}.site h2{margin-bottom:35px}.chapter{height:200svh}}
 @media(prefers-reduced-motion:reduce){.chapter{height:100svh}.sticky{position:relative}}
+
+/* Task 004 — same exhibition stage, four objects. */
+.slide{position:absolute;inset:0;animation:slideNext .48s cubic-bezier(.2,.75,.25,1) both}
+.slide[data-direction="-1"]{animation-name:slidePrevious}
+@keyframes slideNext{from{transform:translateX(18%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slidePrevious{from{transform:translateX(-18%);opacity:0}to{transform:translateX(0);opacity:1}}
+.galleryControls{position:absolute;z-index:5;left:5vw;top:48%;display:flex;align-items:center;gap:6px}
+.galleryControls button{font:12px ui-monospace,monospace;border:1px solid #c9c9bf;border-radius:0;padding:10px 9px;background:var(--paper);color:var(--ink)}
+.galleryControls button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.galleryControls button:disabled{opacity:.3;cursor:default}
+.archive a{justify-self:start;border-bottom:1px solid currentColor;padding-bottom:4px;font-size:13px}
+.archive{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:1000px){.galleryControls{gap:3px}.galleryControls button{padding:8px 5px;font-size:10px}.archive{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.galleryControls{top:auto;bottom:15vh;left:auto;right:5vw}.canvas{inset:25vh 0 24vh}.objectLabel{bottom:7vh}.objectLabel strong{font-size:24px}.archive{grid-template-columns:1fr}.galleryControls button{padding:8px 7px}.hints{bottom:2vh}}
+@media(prefers-reduced-motion:reduce){.slide{animation:none}}
