@@ -1,6 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StudioController } from "./motion/core";
 import { makerProfile } from "./motion/makerProfile";
 import type { ExhibitId } from "./CollectionModels";
@@ -16,6 +16,42 @@ const exhibits = [
   { id:"003", name:"Leather journal", note:"Craft / Patience", description:"Making something tangible, one detail at a time." },
   { id:"004", name:"Film camera", note:"Observation / Memory", description:"Finding another perspective through vintage photography." },
 ];
+function ArchivePreviews({select}:{select:(index:number)=>void}) {
+  const [controller] = useState(()=>new StudioController(makerProfile));
+  const [images,setImages] = useState<Record<string,string>>({});
+  const [index,setIndex] = useState(0);
+  const [visible,setVisible] = useState(false);
+  const archive = useRef<HTMLDivElement>(null);
+  useEffect(()=>{
+    const node=archive.current;
+    if(!node)return;
+    const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){setVisible(true);observer.disconnect();}},{rootMargin:"400px"});
+    observer.observe(node);
+    return ()=>observer.disconnect();
+  },[]);
+  const capture=useCallback((image:string)=>{
+    const exhibit=exhibits[index];
+    if(!exhibit)return;
+    setImages(previous=>({...previous,[exhibit.id]:image}));
+    setIndex(index+1);
+  },[index]);
+  useEffect(()=>{
+    if(!visible || index>=exhibits.length)return;
+    // Continue to the next exhibit if WebGL or image capture is unavailable.
+    const timeout=window.setTimeout(()=>setIndex(i=>i===index?i+1:i),8000);
+    return ()=>window.clearTimeout(timeout);
+  },[visible,index]);
+  return <div ref={archive} className={styles.archive}>
+    {exhibits.map((exhibit,i)=><article key={exhibit.id}>
+      <span>OBJECT {exhibit.id}</span>
+      <a className={styles.archivePreview} href="#top" onClick={()=>select(i)} aria-label={"Explore "+exhibit.name}>
+        {images[exhibit.id] ? <div className={styles.previewImage} role="img" aria-label={exhibit.name+" — 3D model preview"} style={{backgroundImage:"url("+images[exhibit.id]+")"}}/> : <span className={styles.previewPlaceholder}>{exhibit.name}</span>}
+      </a>
+      <h3>{exhibit.name}</h3><span>{exhibit.note}</span><p>{exhibit.description}</p><a href="#top" onClick={()=>select(i)}>Explore object ↗</a>
+    </article>)}
+    {visible && index<exhibits.length && <div className={styles.captureStage} aria-hidden="true"><Scene key={index} settings={settings} view={view} controller={controller} exhibition exhibit={index===0?undefined:exhibits[index].id as ExhibitId} onCapture={capture}/></div>}
+  </div>;
+}
 export default function Landing() {
   const [controller] = useState(() => new StudioController(makerProfile));
   const [active, setActive] = useState(0);
@@ -91,7 +127,7 @@ export default function Landing() {
         <div className={styles.sectionIndex}>03 / PERSONAL ARCHIVE</div>
         <h2>Objects of<br/>curiosity<span>.</span></h2>
         <p className={styles.intro}>A growing collection of things I love to make, take apart and observe.</p>
-        <div className={styles.archive}>{exhibits.map((exhibit,i)=><article key={exhibit.id}><span>OBJECT {exhibit.id}</span><strong>{exhibit.id}</strong><h3>{exhibit.name}</h3><span>{exhibit.note}</span><p>{exhibit.description}</p><a href="#top" onClick={()=>select(i)}>Explore object ↗</a></article>)}</div>
+        <ArchivePreviews select={select}/>
       </section>
       <section id="contact" className={styles.contact}>
         <div className={styles.sectionIndex}>04 / COLLABORATION</div>
