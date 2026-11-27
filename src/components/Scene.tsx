@@ -6,14 +6,24 @@ import {
   Lightformer,
   OrbitControls,
 } from "@react-three/drei";
-import { useEffect, useRef } from "react";
+import { Component, useEffect, useRef, type ReactNode } from "react";
 import type { OrbitControls as Controls } from "three-stdlib";
 import CollectionModel, { type ExhibitId } from "./CollectionModels";
 import MotionRig from "./motion/MotionRig";
 import { makerProfile } from "./motion/makerProfile";
 import type { StudioController } from "./motion/core";
 import { cameraPresets, studioPreset } from "./presets";
+import { BackSide, PCFShadowMap } from "three";
+import { defaultMakerEdition, type MakerEditionId } from "./editions";
 import MakerConsole, { type Settings } from "./MakerConsole";
+function RenderingFallback() {
+  return <p className="loading" role="status">3D preview unavailable. Enable WebGL hardware acceleration to inspect the model. Object details remain available below.</p>;
+}
+class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? <RenderingFallback/> : this.props.children; }
+}
 function Snapshot({onCapture}:{onCapture:(image:string)=>void}) {
   const frames=useRef(0);
   const pending=useRef<number|null>(null);
@@ -65,6 +75,7 @@ function Camera({ view, exhibition, controller, exhibit }: { view: { name: strin
       makeDefault
       minDistance={5}
       maxDistance={30}
+      enableDamping={!exhibition}
       enablePan={false}
       enableZoom={!exhibition}
     />
@@ -77,8 +88,10 @@ export default function Scene({
   exhibition = false,
   exhibit,
   onCapture,
+  edition = defaultMakerEdition,
 }: {
   settings: Settings;
+  edition?: MakerEditionId;
   exhibition?: boolean;
   exhibit?: ExhibitId;
   onCapture?: (image:string)=>void;
@@ -86,18 +99,13 @@ export default function Scene({
   view: { name: string; id: number };
 }) {
   return (
-    <Canvas
-      shadows
+    <SceneBoundary><Canvas
+      shadows={{ type: PCFShadowMap }}
       dpr={onCapture ? 1 : [1, 1.75]}
       camera={{ position: [7, 8, 9], fov: 40 }}
       frameloop="demand"
       gl={{ antialias: true }}
-      fallback={
-        <p className="loading">
-          WebGL is unavailable. Please enable hardware acceleration to inspect
-          this 3D model.
-        </p>
-      }
+      fallback={<RenderingFallback/>}
     >
       <color attach="background" args={[exhibition ? "#F4F3EE" : "#eeece5"]} />
       <ambientLight intensity={studioPreset.ambient * settings.light} />
@@ -110,6 +118,10 @@ export default function Scene({
       <directionalLight position={[5,4,1]} intensity={studioPreset.fill * settings.light} />
       <directionalLight position={[0,5,-6]} intensity={studioPreset.rim * settings.light} />
       <Environment resolution={256}>
+        {!exhibit && <>
+          <mesh><sphereGeometry args={[30, 24, 16]}/><meshBasicMaterial color="#b7b5ae" side={BackSide}/></mesh>
+          <Lightformer position={[1, 3, 6]} rotation={[0, Math.PI, 0]} scale={[8, 4, 1]} intensity={2 * settings.light}/>
+        </>}
         <Lightformer
           position={[-5, 5, 2]}
           rotation={[0, Math.PI / 2, 0]}
@@ -130,7 +142,7 @@ export default function Scene({
         />
       </Environment>
       {exhibit ? <CollectionModel key={exhibit} id={exhibit} controller={controller}/> : <MotionRig controller={controller} profile={makerProfile}>
-        <MakerConsole settings={settings} />
+        <MakerConsole settings={settings} edition={edition} />
       </MotionRig>}
       <ContactShadows
         position={[0, -0.03, 0]}
@@ -142,6 +154,6 @@ export default function Scene({
       />
       <Camera view={view} exhibition={exhibition} controller={controller} exhibit={exhibit} />
       {onCapture && <Snapshot onCapture={onCapture}/>}
-    </Canvas>
+    </Canvas></SceneBoundary>
   );
 }

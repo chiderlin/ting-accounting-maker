@@ -68,3 +68,7 @@ Game Boy, Leather Journal and Film Camera editions; new objects; backend service
 ## References
 
 See Design.md Revision 2 for the complete visual system, edition roadmap, interaction contract and PBR references. Existing tasks/task2.md, tasks/task3.md, tasks/task4.md and MOTION.md remain engineering references.
+
+## Implementation review
+
+2026-11-27: Implementation and verification recorded in [task5-review.md](task5-review.md). Awaiting owner visual approval; do not mark done yet.

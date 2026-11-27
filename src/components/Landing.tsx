@@ -5,6 +5,8 @@ import { StudioController } from "./motion/core";
 import { makerProfile } from "./motion/makerProfile";
 import type { ExhibitId } from "./CollectionModels";
 import type { Settings } from "./MakerConsole";
+import EditionSelector from "./EditionSelector";
+import { defaultMakerEdition, makerEditions, type MakerEditionId } from "./editions";
 import styles from "./Landing.module.css";
 
 const Scene = dynamic(() => import("./Scene"), { ssr: false, loading: () => <div className={styles.loading}>Preparing object 001…</div> });
@@ -55,6 +57,7 @@ function ArchivePreviews({select}:{select:(index:number)=>void}) {
 export default function Landing() {
   const [controller] = useState(() => new StudioController(makerProfile));
   const [active, setActive] = useState(0);
+  const [edition, setEdition] = useState<MakerEditionId>(defaultMakerEdition);
   const [direction, setDirection] = useState(1);
   const touch = useRef<{x:number;y:number}|null>(null);
   const select = (index:number) => { if(index<0 || index>=exhibits.length || index===active) return; setDirection(index>active?1:-1);setActive(index); };
@@ -71,7 +74,7 @@ export default function Landing() {
       const el = chapter.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      const travel = Math.max(1, el.offsetHeight - window.innerHeight);
+      const travel = Math.max(1, el.offsetHeight - (el.firstElementChild?.clientHeight ?? window.innerHeight));
       const progress = Math.max(0, Math.min(1, -rect.top / travel));
       const explode = media.matches ? 0 : Math.max(0, Math.min(1, (progress - .08) / .72));
       controller.setProgress(explode);
@@ -95,13 +98,13 @@ export default function Landing() {
         <nav aria-label="Main navigation"><a href="#about">About</a><a href="#work">Work</a><a href="#collection">Objects</a><a href="#contact">Contact ↗</a></nav>
       </header>
       <section ref={chapter} className={styles.chapter} aria-label="Interactive object exhibition">
-        <div className={styles.sticky} onTouchStart={e=>{const t=e.touches[0];touch.current={x:t.clientX,y:t.clientY};}} onTouchEnd={e=>{const start=touch.current;touch.current=null;if(!start)return;const t=e.changedTouches[0],dx=t.clientX-start.x,dy=t.clientY-start.y;if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5)select(active+(dx<0?1:-1));}}>
+        <div className={styles.sticky} onTouchStart={e=>{if ((e.target as HTMLElement).closest("canvas,button,a")) {touch.current=null;return;}const t=e.touches[0];touch.current={x:t.clientX,y:t.clientY};}} onTouchEnd={e=>{const start=touch.current;touch.current=null;if(!start)return;const t=e.changedTouches[0],dx=t.clientX-start.x,dy=t.clientY-start.y;if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5)select(active+(dx<0?1:-1));}}>
           <div className={styles.heroMeta}><span>EXHIBITION / {object.id}</span><span ref={stageLabel}>ASSEMBLED</span></div>
           <h1 className={styles.heroTitle}>The maker’s<br/>studio<span>.</span></h1>
           <div className={styles.canvas}>
-            <div className={styles.slide} key={active} data-direction={direction}><Scene settings={settings} view={view} controller={controller} exhibition exhibit={active===0?undefined:object.id as ExhibitId}/></div>
+            <div className={styles.slide} key={active} data-direction={direction}><Scene settings={settings} edition={edition} view={view} controller={controller} exhibition exhibit={active===0?undefined:object.id as ExhibitId}/></div>
           </div>
-          <div className={styles.objectLabel} aria-live="polite"><span>OBJECT — {object.id}</span><strong>{object.name}</strong><span>{object.note}</span></div>
+          <div className={styles.objectLabel} aria-live="polite"><span>OBJECT — {object.id}</span><strong>{object.name}</strong><span>{object.note}</span>{active===0 && <EditionSelector choices={makerEditions} value={edition} onChange={setEdition}/>}</div>
           <div className={styles.galleryControls} aria-label="Choose exhibit"><button aria-label="Previous object" disabled={active===0} onClick={()=>select(active-1)}>←</button>{exhibits.map((item,i)=><button key={item.id} aria-label={item.name} aria-pressed={active===i} onClick={()=>select(i)}>{item.id}</button>)}<button aria-label="Next object" disabled={active===exhibits.length-1} onClick={()=>select(active+1)}>→</button></div>
           <div className={styles.hints}><span>{reduced ? "STATIC EXHIBITION" : "DRAG TO ROTATE"}</span><a href="#about">SCROLL TO EXPLORE ↓</a></div>
           <div className={styles.progress} aria-hidden="true"><span ref={indicator}/></div>
