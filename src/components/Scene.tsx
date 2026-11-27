@@ -1,5 +1,5 @@
 "use client";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import {
   ContactShadows,
   Environment,
@@ -8,45 +8,87 @@ import {
 } from "@react-three/drei";
 import { useEffect, useRef } from "react";
 import type { OrbitControls as Controls } from "three-stdlib";
+import CollectionModel, { type ExhibitId } from "./CollectionModels";
+import MotionRig from "./motion/MotionRig";
+import { makerProfile } from "./motion/makerProfile";
+import type { StudioController } from "./motion/core";
+import { cameraPresets, studioPreset } from "./presets";
 import MakerConsole, { type Settings } from "./MakerConsole";
-function Camera({ view }: { view: { name: string; id: number } }) {
-  const { camera, invalidate } = useThree();
+function Snapshot({onCapture}:{onCapture:(image:string)=>void}) {
+  const frames=useRef(0);
+  const pending=useRef<number|null>(null);
+  useEffect(()=>()=>{if(pending.current!==null)cancelAnimationFrame(pending.current);},[]);
+  useFrame(({gl,scene,camera,invalidate})=>{
+    gl.render(scene,camera);
+    if(frames.current++<4){invalidate();return;}
+    if(frames.current!==5)return;
+    try {
+      const image=gl.domElement.toDataURL("image/png");
+      pending.current=requestAnimationFrame(()=>onCapture(image));
+    } catch { /* Keep the accessible text fallback if capture is unavailable. */ }
+  },1);
+  return null;
+}
+function Camera({ view, exhibition, controller, exhibit }: { view: { name: string; id: number }; exhibition: boolean; controller: StudioController; exhibit?: ExhibitId }) {
+  const { camera, invalidate, size } = useThree();
   const ref = useRef<Controls>(null);
   useEffect(() => {
-    const positions: Record<string, [number, number, number]> = {
-      "45°": [7, 8, 9],
-      Front: [0, 5, 11],
-      Side: [11, 3, 0],
-      Back: [0, 4, -11],
-      Top: [0, 13, 0.01],
-      Bottom: [0, -11, 0.01],
-    };
-    camera.position.set(...positions[view.name]);
+    const positions = cameraPresets;
+    const [x, y, z] = exhibit === "004" ? [7, 5, 10] : positions[view.name];
+    camera.position.set(x, y, z);
     ref.current?.target.set(0, 0.65, 0);
     ref.current?.update();
     invalidate();
-  }, [view, camera, invalidate]);
+  }, [view, camera, invalidate, exhibit]);
+  useEffect(() => {
+    if (!exhibition) return;
+    const orbit = ref.current;
+    if (!orbit) return;
+    const frame = () => {
+      const progress = controller.getSnapshot().progress;
+      const blend = progress * progress * (3 - 2 * progress);
+      const aspect = size.width / Math.max(1, size.height);
+      const aspectFit = Math.max(1, 1 / Math.max(.5, aspect));
+      const radius = (exhibit ? 12.5 + (exhibit === "003" ? 4 : 5) * blend : Math.hypot(...cameraPresets[view.name]) * (.84 + .43 * blend)) * aspectFit;
+      const direction = camera.position.clone().sub(orbit.target).normalize();
+      orbit.target.set(exhibit === "003" ? -.8 * blend : 0, exhibit === "004" ? 1.2 + .4 * blend : .65 + 1.8 * blend, exhibit === "004" ? 1.1 * blend : 0);
+      camera.position.copy(orbit.target).addScaledVector(direction, Math.min(radius, 29));
+      orbit.update();
+      invalidate();
+    };
+    frame();
+    return controller.subscribe(frame);
+  }, [camera, controller, exhibition, invalidate, size.width, size.height, view, exhibit]);
   return (
     <OrbitControls
       ref={ref}
       makeDefault
       minDistance={5}
-      maxDistance={20}
+      maxDistance={30}
       enablePan={false}
+      enableZoom={!exhibition}
     />
   );
 }
 export default function Scene({
   settings,
   view,
+  controller,
+  exhibition = false,
+  exhibit,
+  onCapture,
 }: {
   settings: Settings;
+  exhibition?: boolean;
+  exhibit?: ExhibitId;
+  onCapture?: (image:string)=>void;
+  controller: StudioController;
   view: { name: string; id: number };
 }) {
   return (
     <Canvas
       shadows
-      dpr={[1, 1.75]}
+      dpr={onCapture ? 1 : [1, 1.75]}
       camera={{ position: [7, 8, 9], fov: 40 }}
       frameloop="demand"
       gl={{ antialias: true }}
@@ -57,14 +99,16 @@ export default function Scene({
         </p>
       }
     >
-      <color attach="background" args={["#eeece5"]} />
-      <ambientLight intensity={0.4 * settings.light} />
+      <color attach="background" args={[exhibition ? "#F4F3EE" : "#eeece5"]} />
+      <ambientLight intensity={studioPreset.ambient * settings.light} />
       <directionalLight
         position={[-3, 8, 5]}
-        intensity={2.5 * settings.light}
+        intensity={studioPreset.key * settings.light}
         castShadow
         shadow-mapSize={[2048, 2048]}
       />
+      <directionalLight position={[5,4,1]} intensity={studioPreset.fill * settings.light} />
+      <directionalLight position={[0,5,-6]} intensity={studioPreset.rim * settings.light} />
       <Environment resolution={256}>
         <Lightformer
           position={[-5, 5, 2]}
@@ -85,7 +129,9 @@ export default function Scene({
           intensity={settings.light}
         />
       </Environment>
-      <MakerConsole settings={settings} />
+      {exhibit ? <CollectionModel key={exhibit} id={exhibit} controller={controller}/> : <MotionRig controller={controller} profile={makerProfile}>
+        <MakerConsole settings={settings} />
+      </MotionRig>}
       <ContactShadows
         position={[0, -0.03, 0]}
         opacity={0.38}
@@ -94,7 +140,8 @@ export default function Scene({
         far={5}
         frames={1}
       />
-      <Camera view={view} />
+      <Camera view={view} exhibition={exhibition} controller={controller} exhibit={exhibit} />
+      {onCapture && <Snapshot onCapture={onCapture}/>}
     </Canvas>
   );
 }

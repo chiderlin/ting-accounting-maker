@@ -1,3 +1,33 @@
+# TING — The Maker's Studio
+
+## Landing Page V1 — approved direction
+Industrial Design Portfolio × Digital Museum. A personal exhibition, not a SaaS template or a hardware sales site. TING is an accounting professional with five years of work experience in Japan, currently preparing for CPA, interested in RPA, AI, Game Boy assembly, leather notebook craft and retro photography. The Accounting Maker brand is a shared initiative; do not claim completed client projects or CPA certification.
+
+## Visual system
+- Warm gallery white #F4F3EE, ink #20211F, muted #64665D, accent #D35C37. Preserve existing object's ivory/olive/terracotta materials.
+- Oversized editorial sans-serif typography, tight tracking, small monospace exhibition labels, generous negative space, fine rules, asymmetric 12-column compositions. No generic rounded cards, gradients, decorative particles or stock icon grids.
+- Full-viewport opening exhibition with large real 3D object, title and restrained metadata. Dark contrasting About section; light editorial Work and Collection sections; strong contact closing.
+- Reference: https://recent.design/i/jxpvlxl-ai-generated-macro-pad-3d-model and https://recent.design/i/qkfor3e-3d-product-explorations .
+
+## Interaction
+Entry: assembled OBJECT 001 / MAKER CONSOLE, drag to orbit. Wheel scroll must scroll page, not zoom canvas. Sticky canvas within opening chapter only. Scroll progress drives existing exploded-view controller from 0 to 1; keep object fully visible and hold final exploded view briefly, then reveal TING introduction. No compulsory reassembly before About; reverse scroll reassembles naturally. No scroll hijacking. Touch users retain vertical page scrolling. Reduced-motion users see static assembled scene or descriptive fallback. Essential content is HTML.
+
+## Information architecture
+1. Opening exhibition — THE MAKER'S STUDIO / OBJECT 001.
+2. About — HELLO, I'M TING. Accountant. Maker. Curious mind. Include Japan experience, CPA in progress, accounting, automation and personal interests.
+3. Work — accounting workflows, RPA and AI project explorations; distinguish offerings from verified completed work.
+4. Collection — numbered exhibits; future OBJECT 002 Game Boy, 003 Leather Journal, 004 Film Camera. Do not build additional 3D models in V1 or imply they are available.
+5. Collaboration — AI, automation, better workflows. Real contact details must be supplied before launch; no invented email or dead CTA.
+10 identity tags: Accounting Maker, Automation Crafter, AI Explorer, Workflow Optimizer, Systematic Thinker, Retro Tech Lover, Leather Crafter, Film Photography Enthusiast, Japan Experience, CPA in Progress.
+
+## Implementation boundary
+Use task2-motion-studio as baseline. Preserve /playground and existing model, motion rig, materials and presets. Production home is /. No intermediate prototype or new framework. Test desktop/mobile, forward/reverse scroll, drag, fallback, lint/typecheck/build. Visual approval and real contact details are launch gates.
+
+---
+
+# Historical 3D specification (Tasks 001–002)
+The following is retained for engineering reference. The V1 interaction and layout above supersede conflicting earlier landing-page requirements.
+
 # 3D Art Direction & Motion Design
 
 ## Task 001 implementation — 2026-11-26
@@ -185,3 +215,7 @@ Do not substitute the primary exploded-view experience with static images, GIFs,
 5. Integrate the approved scene into the landing page.
 6. Implement supporting interactions and responsive layouts.
 7. Complete performance and accessibility testing.
+
+## Task 002 implementation candidate
+
+The standalone playground adds a profile-based motion controller, component registry and timeline, with independent key and rotary-cap control, LCD boot stages and scrubber. Presets are shared in presets.ts. The original landing-page motion requirements above remain unchanged; studio M01–M06 are defined separately in task2.md. See MOTION.md for pending visual and runtime checks.

@@ -1,0 +1,71 @@
+.site{--paper:#f4f3ee;--ink:#20211f;--accent:#d35c37;background:var(--paper);color:var(--ink);font-family:"DM Sans",Arial,sans-serif;overflow:clip}
+.site a{color:inherit;text-decoration:none}
+.site a:focus-visible{outline:2px solid var(--accent);outline-offset:5px}
+.nav{height:72px;padding:0 5vw;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #d8d7d0}
+.wordmark{font-size:32px;letter-spacing:-3px;font-weight:700}
+.wordmark span,.heroTitle span,.site h2 span{color:var(--accent);margin:0}
+.navCaption,.heroMeta,.sectionIndex,.objectLabel span,.hints,.archive article>span,.currentObject>span,.footer{font:500 10px/1.5 ui-monospace,monospace;letter-spacing:.12em}
+.nav nav{display:flex;gap:clamp(12px,3vw,44px);font-size:13px}
+.chapter{height:240svh;position:relative}
+.sticky{position:sticky;top:0;height:100svh;min-height:420px;overflow:hidden;isolation:isolate}
+.heroMeta{position:absolute;z-index:3;top:3vh;left:5vw;right:5vw;display:flex;justify-content:space-between;pointer-events:none}
+.heroTitle{position:absolute;z-index:2;top:18%;left:5vw;width:31%;margin:0;font-size:clamp(48px,6.8vw,112px);font-weight:600;line-height:.84;letter-spacing:-.085em;pointer-events:none;color:var(--ink)}
+.canvas{position:absolute;inset:6vh 2vw 11vh 37vw;z-index:1;cursor:grab;touch-action:pan-y}
+.canvas:active{cursor:grabbing}
+.canvas canvas{touch-action:pan-y!important}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:#64665d;font:12px monospace}
+.objectLabel{position:absolute;bottom:5vh;left:5vw;z-index:3;display:grid;gap:4px;pointer-events:none}
+.objectLabel strong{font-size:clamp(20px,3vw,42px);letter-spacing:-.055em;font-weight:500}
+.hints{position:absolute;z-index:3;right:5vw;bottom:5vh;display:grid;text-align:right;gap:8px}
+.progress{height:2px;background:#d8d7d0;position:absolute;bottom:0;left:0;right:0;z-index:4}
+.progress span{display:block;height:100%;background:var(--accent);transform:scaleX(0);transform-origin:left}
+.about,.editorial,.contact{padding:clamp(70px,11vw,170px) 8vw}
+.about,.contact{background:#20211f;color:#f4f3ee}
+.sectionIndex{margin-bottom:42px;opacity:.72}
+.site h2{font-family:"Manrope",Arial,sans-serif;font-size:clamp(58px,10vw,150px);font-weight:500;line-height:.89;letter-spacing:-.085em;text-transform:none;margin:0 0 60px;color:inherit}
+.aboutBody{display:grid;grid-template-columns:1fr 1fr;gap:8vw;max-width:1200px;margin-left:auto}
+.aboutBody p,.intro,.contact p{font-size:clamp(16px,1.6vw,24px);line-height:1.65;max-width:620px}
+.aboutBody .lead{font-size:clamp(32px,5vw,76px);line-height:1.05;letter-spacing:-.055em;margin:0}
+.tags{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:70px;border-top:1px solid #ffffff35;padding-top:24px;font:12px monospace}
+.tags span:before{content:"+";color:var(--accent);margin-right:8px}
+.editorial{border-bottom:1px solid #d8d7d0}
+.intro{margin:0 0 60px auto;color:#64665d}
+.workRow{border-top:1px solid #c9c9bf;display:grid;grid-template-columns:8% 1fr 1fr;gap:25px;padding:32px 0;align-items:baseline}
+.workRow>span{font:12px monospace;color:#64665d}
+.workRow h3,.currentObject h3,.archive h3{font-size:clamp(25px,3vw,45px);font-weight:500;letter-spacing:-.05em;margin:0}
+.workRow p,.archive p{font-size:16px;line-height:1.6;color:#64665d;margin:0}
+.currentObject{display:grid;grid-template-columns:1fr 2fr auto;gap:20px;align-items:center;border-block:1px solid #c9c9bf;padding:28px 0}
+.currentObject a,.contact a{border-bottom:1px solid currentColor;padding-bottom:6px}
+.archive{display:grid;grid-template-columns:repeat(3,1fr);margin-top:40px;gap:30px}
+.archive article{border-top:1px solid #c9c9bf;padding:20px 0;display:grid;gap:12px}
+.archive article>strong{font-size:clamp(60px,9vw,140px);font-weight:400;letter-spacing:-.1em;color:#b9b9af;line-height:1}
+.contact .contactNote{color:#c3c3b8;font-size:16px}
+.contact a{display:inline-block;margin-top:28px}
+.footer{padding:25px 8vw;background:#20211f;color:#c3c3b8;border-top:1px solid #ffffff35}
+@media(max-width:700px){.navCaption{display:none}.nav{height:60px}.nav nav{gap:12px;font-size:11px}.heroTitle{top:8vh;left:5vw;width:90%;font-size:clamp(46px,11vw,76px)}.canvas{inset:28vh 0 16vh;pointer-events:none}.objectLabel{bottom:9vh}.hints{bottom:3vh;left:5vw;right:5vw;display:flex;justify-content:space-between;text-align:left}.hints>span{visibility:hidden}.aboutBody,.archive{grid-template-columns:1fr}.workRow{grid-template-columns:30px 1fr;gap:12px}.workRow p{grid-column:2}.currentObject{grid-template-columns:1fr}.site h2{margin-bottom:35px}.chapter{height:200svh}}
+@media(prefers-reduced-motion:reduce){.chapter{height:100svh}.sticky{position:relative}}
+
+/* Task 004 — same exhibition stage, four objects. */
+.slide{position:absolute;inset:0;animation:slideNext .48s cubic-bezier(.2,.75,.25,1) both}
+.slide[data-direction="-1"]{animation-name:slidePrevious}
+@keyframes slideNext{from{transform:translateX(18%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slidePrevious{from{transform:translateX(-18%);opacity:0}to{transform:translateX(0);opacity:1}}
+.galleryControls{position:absolute;z-index:5;left:5vw;top:48%;display:flex;align-items:center;gap:6px}
+.galleryControls button{font:12px ui-monospace,monospace;border:1px solid #c9c9bf;border-radius:0;padding:10px 9px;background:var(--paper);color:var(--ink)}
+.galleryControls button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.galleryControls button:disabled{opacity:.3;cursor:default}
+.archive a{justify-self:start;border-bottom:1px solid currentColor;padding-bottom:4px;font-size:13px}
+.archive{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:1000px){.galleryControls{gap:3px}.galleryControls button{padding:8px 5px;font-size:10px}.archive{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.galleryControls{top:auto;bottom:15vh;left:auto;right:5vw}.canvas{inset:25vh 0 24vh}.objectLabel{bottom:7vh}.objectLabel strong{font-size:24px}.archive{grid-template-columns:1fr}.galleryControls button{padding:8px 7px}.hints{bottom:2vh}}
+@media(prefers-reduced-motion:reduce){.slide{animation:none}}
+
+/* Archive thumbnails are still captures of the actual exhibition meshes. */
+.archive{position:relative;align-items:start}
+.archive article{grid-template-rows:auto auto auto auto 1fr auto;height:100%}
+.archive .archivePreview{display:block;position:relative;aspect-ratio:4/3;width:100%;border:0;padding:0;overflow:hidden;background:#f4f3ee;justify-self:stretch}
+.previewImage{width:100%;height:100%;background-size:contain;background-repeat:no-repeat;background-position:center;transition:transform .35s ease}
+.archivePreview:hover .previewImage{transform:scale(1.045)}
+.previewPlaceholder{position:absolute;inset:0;display:grid;place-items:center;font:11px ui-monospace,monospace;color:#777970}
+.captureStage{position:absolute;top:0;left:0;width:480px;height:360px;opacity:0;pointer-events:none;overflow:hidden}
+@media(prefers-reduced-motion:reduce){.previewImage{transition:none}}

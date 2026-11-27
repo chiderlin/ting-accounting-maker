@@ -271,3 +271,9 @@ footer {
     font-size: 8px;
   }
 }
+
+.animation-studio .views{margin-bottom:20px}
+.studio-field{display:grid;gap:6px;font-size:11px;margin:0 0 14px}
+.studio-field select,.studio-field input{width:100%;border:1px solid var(--line);border-radius:5px;padding:8px;background:transparent;color:var(--ink);font:inherit}
+.animation-studio :disabled{opacity:.45;cursor:not-allowed}
+@media(min-width:801px){.stage{align-self:start;height:calc(100vh - 88px);min-height:640px;position:sticky;top:0}}
