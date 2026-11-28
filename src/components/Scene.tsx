@@ -121,6 +121,7 @@ export default function Scene({
       />
       <directionalLight position={[5,4,1]} intensity={studioPreset.fill * settings.light} />
       <directionalLight position={[0,5,-6]} intensity={studioPreset.rim * settings.light} />
+      {exhibit === "003" && <directionalLight position={[-5,1,3]} intensity={.85 * settings.light} />}
       <Environment resolution={256}>
         {(!exhibit || exhibit === "002") && <>
           <mesh><sphereGeometry args={[30, 24, 16]}/><meshBasicMaterial color="#b7b5ae" side={BackSide}/></mesh>

@@ -121,12 +121,30 @@ function Journal({controller,edition=defaultJournalEdition}:{controller:StudioCo
   const leather=useMemo(()=>new THREE.MeshPhysicalMaterial({
     color:"#ffffff",map:maps.colour,bumpMap:maps.height,bumpScale:spec.grain,
     roughness:1,roughnessMap:maps.roughness,metalness:0,
-    sheen:.25,sheenColor:new THREE.Color(spec.leather),sheenRoughness:.8,
-    clearcoat:edition==="noir"?.12:.06,clearcoatRoughness:.65
+    sheen:edition==="noir"?.45:.3,sheenColor:new THREE.Color(spec.leather),sheenRoughness:edition==="noir"?.48:.8,
+    clearcoat:edition==="noir"?.25:edition==="patina"?.01:.08,
+    clearcoatRoughness:edition==="noir"?.42:.78
   }),[maps,spec,edition]);
   useEffect(()=>()=>leather.dispose(),[leather]);
+  const coverGrain=useMemo(()=>{
+    const geometry=new THREE.PlaneGeometry(3.48,4.58,48,64);
+    const vertices=geometry.attributes.position;
+    for(let i=0;i<vertices.count;i++){
+      const x=vertices.getX(i), z=vertices.getY(i);
+      const edge=Math.min(1,(1.74-Math.abs(x))*5,(2.29-Math.abs(z))*5);
+      const bow=.055*(1-(x/1.74)**2)*(1-(z/2.29)**2);
+      const flex=.018*Math.sin(z*3.8+x*1.7)+.012*Math.sin(z*9.5-x*2.3);
+      const hinge=.035*Math.exp(-(((x+1.45)/.22)**2))*Math.sin(z*7.5);
+      const aging=edition==="patina"?.022*Math.sin(z*12+x*2.5):0;
+      vertices.setZ(i,(bow+flex+hinge+aging)*Math.max(0,edge));
+    }
+    geometry.computeVertexNormals();
+    return geometry;
+  },[edition]);
+  useEffect(()=>()=>coverGrain.dispose(),[coverGrain]);
   const cover=(y:number)=><>
-    <RoundedBox name="leather outer surface" position={[0,y,0]} args={[3.65,.13,4.75]} radius={.06} smoothness={5} material={leather} castShadow receiveShadow/>
+    <RoundedBox name="soft leather cover" position={[0,y,0]} args={[3.65,.13,4.75]} radius={.065} smoothness={5} material={leather} castShadow receiveShadow/>
+    <mesh name="undulating leather face" position={[0,y+.067,0]} rotation={[-Math.PI/2,0,0]} geometry={coverGrain} material={leather} castShadow receiveShadow/>
     <Block name="burnished leather cut edge" p={[0,y-.055,0]} s={[3.63,.045,4.73]} color={spec.edge} r={.02} rough={.62}/>
     <Block name="suede lining" p={[0,y-.08,0]} s={[3.56,.036,4.66]} color={spec.lining} r={.016} rough={.94}/>
   </>;
@@ -157,9 +175,9 @@ function Journal({controller,edition=defaultJournalEdition}:{controller:StudioCo
     <Moving controller={controller} name="hinged leather cover" position={[-1.77,.70,0]} angle={2.35}>
       <group position={[1.77,.09,0]}>
         {cover(0)}
-        {stitches(.066)}
-        <Mark text="FIELD NOTES" p={[0,.069,-.72]} w={1.45} color={spec.legend}/>
-        <Mark text="T / PERSONAL ARCHIVE" p={[0,.069,-.41]} w={1.02} color={spec.legend}/>
+        {stitches(.12)}
+        <Mark text="FIELD NOTES" p={[0,.13,-.72]} w={1.45} color={spec.legend}/>
+        <Mark text="T / PERSONAL ARCHIVE" p={[0,.13,-.41]} w={1.02} color={spec.legend}/>
         <RoundedBox name="leather closure strap" position={[1.63,.10,.25]} args={[.57,.09,.67]} radius={.04} smoothness={4} material={leather} castShadow receiveShadow/>
         <mesh name="snap fastener" position={[1.59,.164,.25]}><cylinderGeometry args={[.105,.105,.05,48]}/><meshStandardMaterial color={spec.hardware} metalness={.93} roughness={spec.hardwareRoughness}/></mesh>
         <mesh position={[1.59,.192,.25]} rotation={[-Math.PI/2,0,0]}><torusGeometry args={[.073,.007,8,40]}/><meshStandardMaterial color={spec.hardware} metalness={.95} roughness={spec.hardwareRoughness}/></mesh>
