@@ -5,6 +5,8 @@ import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { StudioController } from "./motion/core";
 import { plate } from "./geometry";
+import { defaultGameBoyEdition, gameBoyEdition, type GameBoyEditionId } from "./editions";
+import { surfaceTexture } from "./surfaceTextures";
 
 export type ExhibitId = "002" | "003" | "004";
 type Vec = [number, number, number];
@@ -25,42 +27,89 @@ function Moving({controller,offset=[0,0,0],angle=0,position=[0,0,0],children,nam
   useEffect(()=>{const update=()=>{const p=controller.getSnapshot().progress;const t=p*p*(3-2*p);if(ref.current){ref.current.position.set(x+dx*t,y+dy*t,z+dz*t);ref.current.rotation.z=angle*t;}invalidate();};update();return controller.subscribe(update);},[controller,x,y,z,dx,dy,dz,angle,invalidate]);
   return <group ref={ref} name={name}>{children}</group>;
 }
-function Handheld({controller}:{controller:StudioController}) {
-  const shell=useMemo(()=>plate(3.2,5.25,.25,.25,[
-    {x:0,z:-1.45,w:2.5,h:1.68,r:.16},
-    {x:-.81,z:.35,w:1.05,h:1.05,r:.15},
-    {x:.84,z:.22,w:1.12,h:.9,r:.22},
-    {x:0,z:1.45,w:1.2,h:.38,r:.14}
-  ]),[]);
-  useEffect(()=>()=>shell.dispose(),[shell]);
+function Handheld({controller,edition=defaultGameBoyEdition}:{controller:StudioController;edition?:GameBoyEditionId}) {
+  const spec=gameBoyEdition(edition);
+  const speakerHoles=Array.from({length:6},(_,i)=>({x:.73+i*.12,z:1.95-i*.045,w:.065,h:.39,r:.03}));
+  const geometry=useMemo(()=>({
+    front:plate(3.2,5.25,.16,spec.radius,[
+      {x:0,z:-1.45,w:2.5,h:1.68,r:.16},
+      {x:-.81,z:.35,w:1.04,h:1.04,r:.13},
+      {x:.53,z:.38,w:.53,h:.53,r:.25},
+      {x:1.04,z:.08,w:.53,h:.53,r:.25},
+      {x:-.32,z:1.45,w:.46,h:.22,r:.1},
+      {x:.32,z:1.45,w:.46,h:.22,r:.1},
+      ...Array.from({length:6},(_,i)=>({x:.73+i*.12,z:1.95-i*.045,w:.065,h:.39,r:.03}))
+    ]),
+    wall:plate(3.2,5.25,.51,spec.radius,[{x:0,z:0,w:2.89,h:4.94,r:Math.max(.06,spec.radius-.09)}]),
+    back:plate(3.2,5.25,.14,spec.radius,[
+      {x:0,z:.98,w:1.95,h:1.91,r:.12},
+      {x:0,z:-1.83,w:2.43,h:.94,r:.09}
+    ])
+  }),[spec.radius]);
+  useEffect(()=>()=>Object.values(geometry).forEach(g=>g.dispose()),[geometry]);
+  const bump=useMemo(()=>surfaceTexture(edition==="machined"),[edition]);
+  useEffect(()=>()=>bump.dispose(),[bump]);
+  const shellMat=useMemo(()=>new THREE.MeshPhysicalMaterial({
+    color:spec.shell,roughness:spec.roughness,metalness:spec.metalness,
+    anisotropy:spec.anisotropy,transmission:spec.transmission,ior:1.58,
+    thickness:.16,clearcoat:edition==="transparent"?.35:.08,
+    bumpMap:bump,bumpScale:edition==="machined"?.017:edition==="transparent"?.003:.009,
+    attenuationColor:new THREE.Color("#9676d2"),attenuationDistance:2.8,
+    envMapIntensity:1.15
+  }),[spec,bump,edition]);
+  useEffect(()=>()=>shellMat.dispose(),[shellMat]);
+  const shellPart=(name:string,p:Vec,g:THREE.BufferGeometry)=><mesh name={name} position={p} geometry={g} material={shellMat} castShadow receiveShadow/>;
+  const screw=(x:number,z:number,y:number)=><group key={x+":"+z} position={[x,y,z]}><Disc p={[0,0,0]} r={.082} h={.045} color="#b0b3b2" metal={.9}/><Block p={[0,.025,0]} s={[.09,.008,.019]} color="#414548" r={.003}/><Block p={[0,.026,0]} s={[.019,.008,.09]} color="#414548" r={.003}/></group>;
   return <group name="Game Boy — handheld study">
-    <Block p={[0,.25,0]} s={[3.2,.5,5.25]} color="#c8c2b1" r={.22} name="rear housing"/>
-    <Block p={[0,.01,.95]} s={[2.05,.05,2.0]} color="#b0ab99" r={.12} name="battery door"/>
-    <Block p={[0,.01,-1.85]} s={[2.45,.06,.9]} color="#9e9e8f" r={.08} name="cartridge"/>
+    <group name="rear housing">
+      {shellPart("rear shell plate",[0,.09,0],geometry.back)}
+      {shellPart("perimeter shell wall",[0,.405,0],geometry.wall)}
+      {[-1,1].flatMap(x=>[-1,1].map(z=><group key={x+":"+z}>
+        <mesh position={[x*1.27,.30,z*2.16]} material={shellMat}><cylinderGeometry args={[.12,.14,.31,24]}/></mesh>
+        {screw(x*1.27,z*2.16,.48)}
+      </group>))}
+      {[-1,1].map(x=><Block key={x} p={[x*1.55,.64,0]} s={[.032,.035,4.64]} color={spec.seam} r={.01}/>)}
+      <Block p={[0,.075,.98]} s={[1.92,.13,1.88]} color={spec.seam} r={.09} name="battery door"/>
+      {Array.from({length:7},(_,i)=><Block key={i} p={[-.66+i*.22,.005,1.45]} s={[.08,.018,.34]} color={spec.shell} r={.018}/>)}
+      <Block p={[0,.07,-1.83]} s={[2.38,.13,.89]} color="#777b78" r={.07} name="cartridge"/>
+      {Array.from({length:12},(_,i)=><Block key={i} p={[-.87+i*.158,.15,-1.68]} s={[.08,.018,.27]} color="#bda36c" metal={.8} r={.006}/>)}
+      <Block p={[0,.36,-2.63]} s={[1.62,.10,.045]} color="#343638" r={.025} name="cartridge slot"/>
+      <Block p={[-.88,.60,-2.58]} s={[.42,.12,.15]} color={spec.dpad} r={.035} name="power switch"/>
+      <Block p={[1.6,.35,-1.1]} s={[.035,.18,.42]} color="#343638" r={.02} name="link port"/>
+    </group>
     <Moving controller={controller} name="circuit assembly" offset={[0,.8,0]}>
-      <Block p={[0,.51,0]} s={[2.87,.08,4.88]} color="#405b47" r={.14}/>
-      {Array.from({length:12},(_,i)=><Block key={i} p={[-1.2+i*.21,.565,.4+(i%3)*.4]} s={[.045,.014,1.35]} color="#b6a263" r={.005} metal={.6}/>)}
-      <Block p={[0,.6,-.1]} s={[.8,.15,.7]} color="#252a29" r={.03}/>
-      {Array.from({length:8},(_,i)=><Block key={i} p={[-.48+i*.135,.58,-.49]} s={[.065,.035,.17]} color="#bebdb4" metal={.8} r={.008}/>)}
+      <Block p={[0,.49,0]} s={[2.76,.08,4.70]} color="#365e49" r={.12} rough={.75}/>
+      {Array.from({length:18},(_,i)=><Block key={i} p={[-1.15+i*.135,.54,.35+(i%4)*.36]} s={[.026,.009,1.25]} color="#b6a263" r={.003} metal={.72}/>)}
+      <Block p={[0,.57,-.18]} s={[.87,.12,.71]} color="#262a29" r={.025}/>
+      <Mark text="DM / CPU" p={[0,.635,-.18]} w={.58} color="#b8c1b6"/>
+      {Array.from({length:10},(_,i)=><group key={i}>{[-1,1].map(z=><Block key={z} p={[-.39+i*.087,.55,-.18+z*.39]} s={[.045,.032,.15]} color="#bebdb4" metal={.8} r={.004}/>)}</group>)}
+      {[-.95,.95].map(x=><group key={x}><Block p={[x,.57,-.55]} s={[.33,.12,.46]} color="#343938" r={.024}/><Disc p={[x,.56,1.2]} r={.15} h={.14} color="#aeb8b6" metal={.8}/></group>)}
+      {Array.from({length:14},(_,i)=><Block key={i} p={[-1.12+(i%7)*.35,.55,-2.05+Math.floor(i/7)*.24]} s={[.14,.045,.08]} color={i%3===0?"#b8ab85":"#555f55"} r={.007}/>)}
+      <Disc p={[.97,.55,1.8]} r={.33} h={.06} color="#323c3b" metal={.3}/>
     </Moving>
     <Moving controller={controller} name="front enclosure" offset={[0,2.05,0]}>
-      <mesh geometry={shell} position={[0,.75,0]} castShadow receiveShadow><meshStandardMaterial color="#e1dccc" roughness={.44}/></mesh>
-      <Mark text="POCKET / 89" p={[0,.89,-2.38]} w={1.5}/>
-      {Array.from({length:6},(_,i)=><Block key={i} p={[.77+i*.115,.89,1.92-i*.055]} s={[.065,.018,.42]} color="#757568" r={.027}/>)}
+      {shellPart("front face",[0,.76,0],geometry.front)}
+      <Mark text="POCKET / 89" p={[0,.87,-2.39]} w={1.45} color={spec.legend}/>
+      <Mark text="SELECT       START" p={[0,.87,1.72]} w={1.35} color={spec.legend}/>
+      <Mark text="B" p={[.53,.87,.73]} w={.24} color={spec.legend}/>
+      <Mark text="A" p={[1.04,.87,.43]} w={.24} color={spec.legend}/>
+      {speakerHoles.map((h,i)=><Block key={i} p={[h.x,.66,h.z]} s={[.058,.025,.36]} color="#292d30" r={.015}/>)}
     </Moving>
     <Moving controller={controller} name="LCD and bezel" offset={[0,1.4,0]}>
-      <Block p={[0,.77,-1.45]} s={[2.45,.28,1.63]} color="#686b61" r={.14}/>
-      <Block p={[0,.924,-1.47]} s={[1.84,.035,1.24]} color="#87996c" r={.06} rough={.23}/>
-      {Array.from({length:18},(_,i)=><Block key={i} p={[-.66+(i%6)*.25,.945,-1.81+Math.floor(i/6)*.2]} s={[.11,.006,.11]} color={i%4===0?"#536344":"#99a87a"} r={.005}/>)}
-      <Mark text="DOT MATRIX" p={[0,.925,-.76]} w={1.3} color="#e3dfce"/>
+      <Block p={[0,.76,-1.45]} s={[2.45,.23,1.63]} color={spec.bezel} r={.12} rough={.43}/>
+      <Block p={[0,.89,-1.47]} s={[1.87,.035,1.23]} color="#819568" r={.047} rough={.26}/>
+      {Array.from({length:18},(_,i)=><Block key={i} p={[-.66+(i%6)*.25,.91,-1.81+Math.floor(i/6)*.2]} s={[.11,.005,.11]} color={i%4===0?"#4c6041":"#98a778"} r={.002}/>)}
+      <RoundedBox position={[0,.93,-1.47]} args={[1.89,.026,1.25]} radius={.012} smoothness={3}><meshPhysicalMaterial color="#eff6e0" transmission={.96} thickness={.025} ior={1.48} roughness={.065}/></RoundedBox>
+      <Mark text="DOT MATRIX" p={[0,.885,-.75]} w={1.15} color="#e3dfce"/>
+      <Disc p={[-1.04,.89,-1.93]} r={.04} h={.018} color="#b94b46"/>
     </Moving>
     <Moving controller={controller} name="controls" offset={[0,3.1,0]}>
-      <Block p={[-.81,.88,.35]} s={[.94,.22,.32]} color="#373c38" r={.065}/>
-      <Block p={[-.81,.88,.35]} s={[.32,.22,.94]} color="#373c38" r={.065}/>
-      <Disc p={[.53,.89,.38]} r={.245} h={.23} color="#a25c50"/>
-      <Disc p={[1.04,.89,.08]} r={.245} h={.23} color="#a25c50"/>
-      <Mark text="B" p={[.53,1.01,.38]} w={.29} color="#f2e9db"/><Mark text="A" p={[1.04,1.01,.08]} w={.29} color="#f2e9db"/>
-      {[-.32,.32].map(x=><Block key={x} p={[x,.87,1.45]} s={[.43,.14,.19]} color="#797e73" r={.08}/>)}
+      <Block p={[-.81,.85,.35]} s={[.96,.19,.34]} color={spec.dpad} r={.06}/>
+      <Block p={[-.81,.855,.35]} s={[.34,.20,.96]} color={spec.dpad} r={.06}/>
+      {[-1,1].map(n=><group key={n}><Block p={[-.81+n*.33,.955,.35]} s={[.12,.012,.055]} color="#797c7b" r={.006}/><Block p={[-.81,.96,.35+n*.33]} s={[.055,.012,.12]} color="#797c7b" r={.006}/></group>)}
+      <Disc p={[-.81,.96,.35]} r={.095} h={.012} color="#282b2a"/>
+      {[[.53,.38],[1.04,.08]].map(([x,z])=><group key={x}><Disc p={[x,.86,z]} r={.245} h={.21} color={spec.button}/><Disc p={[x,.969,z]} r={.205} h={.025} color={spec.button}/></group>)}
+      {[-.32,.32].map(x=><Block key={x} p={[x,.86,1.45]} s={[.43,.14,.19]} color="#666b68" r={.065}/>)}
     </Moving>
   </group>;
 }
@@ -118,6 +167,6 @@ function CameraModel({controller}:{controller:StudioController}) {
     </Moving>
   </group>;
 }
-export default function CollectionModel({id,controller}:{id:ExhibitId;controller:StudioController}) {
-  return id==="002"?<Handheld controller={controller}/>:id==="003"?<Journal controller={controller}/>:<CameraModel controller={controller}/>;
+export default function CollectionModel({id,controller,gameBoyEdition=defaultGameBoyEdition}:{id:ExhibitId;controller:StudioController;gameBoyEdition?:GameBoyEditionId}) {
+  return id==="002"?<Handheld controller={controller} edition={gameBoyEdition}/>:id==="003"?<Journal controller={controller}/>:<CameraModel controller={controller}/>;
 }
