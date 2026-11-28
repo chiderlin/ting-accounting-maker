@@ -225,7 +225,7 @@ function CameraModel({controller,edition=defaultCameraEdition}:{controller:Studi
     barrel:new THREE.MeshStandardMaterial({color:spec.barrel,metalness:.25,roughness:.55,bumpMap:maps.grain,bumpScale:.007}),
     dial:new THREE.MeshStandardMaterial({color:spec.dial,metalness:.8,roughness:.35}),
     interior:new THREE.MeshStandardMaterial({color:"#181b1a",roughness:.88}),
-    glass:new THREE.MeshPhysicalMaterial({color:"#d5e6df",metalness:0,roughness:.045,transmission:.88,thickness:.14,ior:1.52,iridescence:.32,iridescenceIOR:1.38,iridescenceThicknessRange:[110,260],clearcoat:1,clearcoatRoughness:.06}),
+    glass:new THREE.MeshPhysicalMaterial({color:"#d5e6df",metalness:0,roughness:.045,transmission:.88,thickness:.14,ior:1.52,iridescence:.32,iridescenceIOR:1.38,iridescenceThicknessMinimum:110,iridescenceThicknessMaximum:260,clearcoat:1,clearcoatRoughness:.06}),
   }),[spec,maps,edition]);
   useEffect(()=>()=>Object.values(mats).forEach(m=>m.dispose()),[mats]);
   const iris=useMemo(()=>{
