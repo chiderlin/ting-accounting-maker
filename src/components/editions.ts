@@ -24,3 +24,19 @@ export const makerEditions: readonly MakerEdition[] = [
 export function makerEdition(id: MakerEditionId) {
   return makerEditions.find(edition => edition.id === id)!;
 }
+
+export type GameBoyEditionId = "classic" | "transparent" | "machined";
+type GameBoyEdition = EditionChoice<GameBoyEditionId> & {
+  shell:string; radius:number; roughness:number; metalness:number;
+  anisotropy:number; transmission:number; button:string; dpad:string;
+  bezel:string; legend:string; seam:string;
+};
+export const defaultGameBoyEdition: GameBoyEditionId = "classic";
+export const gameBoyEditions: readonly GameBoyEdition[] = [
+  {id:"classic",name:"Classic ABS",label:"Classic",swatch:"#d7d2c6",shell:"#d7d2c6",radius:.24,roughness:.57,metalness:0,anisotropy:0,transmission:0,button:"#822d50",dpad:"#383b3b",bezel:"#66696b",legend:"#494353",seam:"#b0aca2"},
+  {id:"transparent",name:"Atomic Purple",label:"Transparent",swatch:"#9279c3",shell:"#b3a0e0",radius:.24,roughness:.16,metalness:0,anisotropy:0,transmission:.82,button:"#40364d",dpad:"#36323e",bezel:"#514b65",legend:"#332745",seam:"#8873ad"},
+  {id:"machined",name:"CNC Machined Aluminium",label:"Machined",swatch:"#bfc4c8",shell:"#c5cbd0",radius:.14,roughness:.32,metalness:1,anisotropy:.78,transmission:0,button:"#333638",dpad:"#292d2e",bezel:"#343a3b",legend:"#272c30",seam:"#747d81"},
+];
+export function gameBoyEdition(id:GameBoyEditionId) {
+  return gameBoyEditions.find(edition=>edition.id===id)!;
+}
