@@ -14,7 +14,7 @@ import { makerProfile } from "./motion/makerProfile";
 import type { StudioController } from "./motion/core";
 import { cameraPresets, studioPreset } from "./presets";
 import { BackSide, PCFShadowMap } from "three";
-import { defaultMakerEdition, defaultGameBoyEdition, type MakerEditionId, type GameBoyEditionId, defaultJournalEdition, type JournalEditionId } from "./editions";
+import { defaultMakerEdition, defaultGameBoyEdition, type MakerEditionId, type GameBoyEditionId, defaultJournalEdition, type JournalEditionId, defaultCameraEdition, type CameraEditionId } from "./editions";
 import MakerConsole, { type Settings } from "./MakerConsole";
 function RenderingFallback() {
   return <p className="loading" role="status">3D preview unavailable. Enable WebGL hardware acceleration to inspect the model. Object details remain available below.</p>;
@@ -91,11 +91,13 @@ export default function Scene({
   edition = defaultMakerEdition,
   gameBoyEdition = defaultGameBoyEdition,
   journalEdition = defaultJournalEdition,
+  cameraEdition = defaultCameraEdition,
 }: {
   settings: Settings;
   edition?: MakerEditionId;
   gameBoyEdition?: GameBoyEditionId;
   journalEdition?: JournalEditionId;
+  cameraEdition?: CameraEditionId;
   exhibition?: boolean;
   exhibit?: ExhibitId;
   onCapture?: (image:string)=>void;
@@ -123,7 +125,7 @@ export default function Scene({
       <directionalLight position={[0,5,-6]} intensity={studioPreset.rim * settings.light} />
       {exhibit === "003" && <directionalLight position={[-5,1,3]} intensity={.85 * settings.light} />}
       <Environment resolution={256}>
-        {(!exhibit || exhibit === "002") && <>
+        {(!exhibit || exhibit === "002" || exhibit === "004") && <>
           <mesh><sphereGeometry args={[30, 24, 16]}/><meshBasicMaterial color="#b7b5ae" side={BackSide}/></mesh>
           <Lightformer position={[1, 3, 6]} rotation={[0, Math.PI, 0]} scale={[8, 4, 1]} intensity={2 * settings.light}/>
         </>}
@@ -146,7 +148,7 @@ export default function Scene({
           intensity={settings.light}
         />
       </Environment>
-      {exhibit ? <CollectionModel key={exhibit} id={exhibit} controller={controller} gameBoyEdition={gameBoyEdition} journalEdition={journalEdition}/> : <MotionRig controller={controller} profile={makerProfile}>
+      {exhibit ? <CollectionModel key={exhibit} id={exhibit} controller={controller} gameBoyEdition={gameBoyEdition} journalEdition={journalEdition} cameraEdition={cameraEdition}/> : <MotionRig controller={controller} profile={makerProfile}>
         <MakerConsole settings={settings} edition={edition} />
       </MotionRig>}
       <ContactShadows
