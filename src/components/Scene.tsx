@@ -14,7 +14,7 @@ import { makerProfile } from "./motion/makerProfile";
 import type { StudioController } from "./motion/core";
 import { cameraPresets, studioPreset } from "./presets";
 import { BackSide, PCFShadowMap } from "three";
-import { defaultMakerEdition, defaultGameBoyEdition, type MakerEditionId, type GameBoyEditionId } from "./editions";
+import { defaultMakerEdition, defaultGameBoyEdition, type MakerEditionId, type GameBoyEditionId, defaultJournalEdition, type JournalEditionId } from "./editions";
 import MakerConsole, { type Settings } from "./MakerConsole";
 function RenderingFallback() {
   return <p className="loading" role="status">3D preview unavailable. Enable WebGL hardware acceleration to inspect the model. Object details remain available below.</p>;
@@ -90,10 +90,12 @@ export default function Scene({
   onCapture,
   edition = defaultMakerEdition,
   gameBoyEdition = defaultGameBoyEdition,
+  journalEdition = defaultJournalEdition,
 }: {
   settings: Settings;
   edition?: MakerEditionId;
   gameBoyEdition?: GameBoyEditionId;
+  journalEdition?: JournalEditionId;
   exhibition?: boolean;
   exhibit?: ExhibitId;
   onCapture?: (image:string)=>void;
@@ -143,7 +145,7 @@ export default function Scene({
           intensity={settings.light}
         />
       </Environment>
-      {exhibit ? <CollectionModel key={exhibit} id={exhibit} controller={controller} gameBoyEdition={gameBoyEdition}/> : <MotionRig controller={controller} profile={makerProfile}>
+      {exhibit ? <CollectionModel key={exhibit} id={exhibit} controller={controller} gameBoyEdition={gameBoyEdition} journalEdition={journalEdition}/> : <MotionRig controller={controller} profile={makerProfile}>
         <MakerConsole settings={settings} edition={edition} />
       </MotionRig>}
       <ContactShadows
