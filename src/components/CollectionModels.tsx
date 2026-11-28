@@ -5,9 +5,10 @@ import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { StudioController } from "./motion/core";
 import { plate } from "./geometry";
-import { defaultGameBoyEdition, gameBoyEdition, type GameBoyEditionId, defaultJournalEdition, journalEdition, type JournalEditionId } from "./editions";
+import { defaultGameBoyEdition, gameBoyEdition, type GameBoyEditionId, defaultJournalEdition, journalEdition, type JournalEditionId, defaultCameraEdition, cameraEdition, type CameraEditionId } from "./editions";
 import { surfaceTexture } from "./surfaceTextures";
 import { leatherTextures } from "./leatherTextures";
+import { cameraTextures } from "./cameraTextures";
 
 export type ExhibitId = "002" | "003" | "004";
 type Vec = [number, number, number];
@@ -186,40 +187,118 @@ function Journal({controller,edition=defaultJournalEdition}:{controller:StudioCo
     <Block name="woven ribbon bookmark" p={[.4,.27,2.39]} s={[.16,.026,.55]} color={spec.ribbon} r={.009} rough={.98}/>
   </group>;
 }
-function CameraModel({controller}:{controller:StudioController}) {
+// Lathed annular parts retain a genuinely open optical path.
+function LensRing({p,outer,inner,depth,material,name}:{p:Vec;outer:number;inner:number;depth:number;material:THREE.Material;name:string}) {
+  const points=useMemo(()=>{
+    const h=depth/2, bevel=Math.min(.025,depth*.18,(outer-inner)*.22);
+    return [[outer-bevel,-h],[outer,-h+bevel],[outer,h-bevel],[outer-bevel,h],[inner+bevel,h],[inner,h-bevel],[inner,-h+bevel],[inner+bevel,-h],[outer-bevel,-h]].map(([r,z])=>new THREE.Vector2(r,z));
+  },[outer,inner,depth]);
+  return <mesh name={name} position={p} rotation={[Math.PI/2,0,0]} material={material} castShadow receiveShadow><latheGeometry args={[points,96]}/></mesh>;
+}
+function LensLegend({p,color}:{p:Vec;color:string}) {
+  const map=useMemo(()=>{
+    const c=document.createElement("canvas");c.width=c.height=512;
+    const ctx=c.getContext("2d")!;ctx.translate(256,256);
+    ctx.fillStyle=color;ctx.strokeStyle=color;ctx.lineWidth=2;
+    ctx.font="500 23px Arial";ctx.textAlign="center";ctx.textBaseline="middle";
+    const arc=(text:string,start:number,step:number)=>{
+      Array.from(text).forEach((ch,i)=>{
+        const a=start+i*step;ctx.save();ctx.rotate(a);ctx.translate(0,-222);ctx.fillText(ch,0,0);ctx.restore();
+      });
+    };
+    arc("ANALOG  35 mm",-.63,.105);
+    arc("1:2.8  /  004",2.51,.105);
+    for(let i=0;i<12;i++){const a=i*Math.PI/6;ctx.beginPath();ctx.moveTo(Math.cos(a)*237,Math.sin(a)*237);ctx.lineTo(Math.cos(a)*244,Math.sin(a)*244);ctx.stroke();}
+    const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;
+  },[color]);
+  useEffect(()=>()=>map.dispose(),[map]);
+  return <mesh position={p}><planeGeometry args={[1.58,1.58]}/><meshBasicMaterial map={map} transparent depthWrite={false} polygonOffset polygonOffsetFactor={-1}/></mesh>;
+}
+function CameraModel({controller,edition=defaultCameraEdition}:{controller:StudioController;edition?:CameraEditionId}) {
+  const spec=cameraEdition(edition);
+  const maps=useMemo(()=>cameraTextures(spec),[spec]);
+  useEffect(()=>()=>Object.values(maps).forEach(t=>t.dispose()),[maps]);
+  const mats=useMemo(()=>({
+    plate:new THREE.MeshPhysicalMaterial({color:"#ffffff",map:maps.colour,roughness:1,roughnessMap:maps.roughness,metalness:1,metalnessMap:maps.metalness,bumpMap:maps.grain,bumpScale:.009,anisotropy:edition==="chrome"?.62:0,clearcoat:edition==="brass"?.18:.06,clearcoatRoughness:.45}),
+    grip:new THREE.MeshStandardMaterial({color:spec.grip,roughness:.83,bumpMap:maps.grip,bumpScale:.035}),
+    trim:new THREE.MeshStandardMaterial({color:spec.trim,metalness:.94,roughness:edition==="brass"?.45:.26}),
+    barrel:new THREE.MeshStandardMaterial({color:spec.barrel,metalness:.25,roughness:.55,bumpMap:maps.grain,bumpScale:.007}),
+    dial:new THREE.MeshStandardMaterial({color:spec.dial,metalness:.8,roughness:.35}),
+    interior:new THREE.MeshStandardMaterial({color:"#181b1a",roughness:.88}),
+    glass:new THREE.MeshPhysicalMaterial({color:"#d5e6df",metalness:0,roughness:.045,transmission:.88,thickness:.14,ior:1.52,iridescence:.32,iridescenceIOR:1.38,iridescenceThicknessRange:[110,260],clearcoat:1,clearcoatRoughness:.06}),
+  }),[spec,maps,edition]);
+  useEffect(()=>()=>Object.values(mats).forEach(m=>m.dispose()),[mats]);
+  const iris=useMemo(()=>{
+    const shape=new THREE.Shape();shape.absarc(0,0,.56,0,Math.PI*2,false);
+    const hole=new THREE.Path();
+    for(let i=0;i<=7;i++){const a=-i*Math.PI*2/7;const x=.21*Math.cos(a),y=.21*Math.sin(a);if(i===0)hole.moveTo(x,y);else hole.lineTo(x,y);}
+    shape.holes.push(hole);return new THREE.ShapeGeometry(shape,64);
+  },[]);
+  useEffect(()=>()=>iris.dispose(),[iris]);
+  const box=(name:string,p:Vec,s:Vec,r:number,m:THREE.Material)=><RoundedBox name={name} position={p} args={s} radius={r} smoothness={4} material={m} castShadow receiveShadow/>;
+  const disk=(name:string,p:Vec,r:number,h:number,m:THREE.Material,rotation:Vec=[0,0,0])=><mesh name={name} position={p} rotation={rotation} material={m} castShadow receiveShadow><cylinderGeometry args={[r,r,h,64]}/></mesh>;
   const forward:Vec=[Math.PI/2,0,0];
-  return <group name="Film camera">
-    <Block p={[0,1.13,0]} s={[4.4,2.2,1.35]} color="#333633" r={.19} rough={.8}/>
-    <Block p={[0,.17,0]} s={[4.36,.28,1.4]} color="#b7b9b4" r={.09} metal={.8}/>
+  const topRibs=(x:number,y:number,z:number,r:number,count:number)=>Array.from({length:count},(_,i)=>{const a=i*Math.PI*2/count;return <mesh key={i} position={[x+r*Math.cos(a),y,z+r*Math.sin(a)]} rotation={[0,-a,0]} material={mats.dial}><boxGeometry args={[.035,.14,.035]}/></mesh>;});
+  const lensRibs=(z:number,r:number,count:number)=>Array.from({length:count},(_,i)=>{const a=i*Math.PI*2/count;return <mesh key={i} position={[r*Math.cos(a),1.13+r*Math.sin(a),z]} rotation={[0,0,a]} material={mats.barrel}><boxGeometry args={[.045,.033,.32]}/></mesh>;});
+  return <group name="Film camera — analogue study">
+    {box("body chassis",[0,1.13,0],[4.4,1.94,1.38],.19,mats.interior)}
+    {box("bottom metal plate",[0,.17,0],[4.41,.28,1.41],.11,mats.plate)}
+    {box("front leatherette left",[-1.53,1.10,.686],[1.14,1.63,.075],.035,mats.grip)}
+    {box("front leatherette right",[1.53,1.10,.686],[1.14,1.63,.075],.035,mats.grip)}
+    {box("rear film door",[0,1.14,-.71],[3.98,1.61,.10],.055,mats.grip)}
+    {box("left wrap grip",[-2.18,1.12,0],[.068,1.57,1.12],.032,mats.grip)}
+    {box("right wrap grip",[2.18,1.12,0],[.068,1.57,1.12],.032,mats.grip)}
+    {box("film memo holder",[.85,1.1,-.78],[.96,.62,.055],.026,mats.trim)}
+    <Block p={[.85,1.1,-.815]} s={[.82,.48,.025]} color="#343733" r={.015}/>
+    <Mark text="35 mm / FILM" p={[.85,1.1,-.83]} w={.70} color={spec.legend} rotation={[0,Math.PI,0]}/>
+    {[-1,1].map(x=><group key={x}>
+      {box("strap lug",[x*2.23,1.86,0],[.17,.24,.22],.055,mats.trim)}
+      {disk("base screw",[x*1.67,.025,0],.082,.025,mats.trim)}
+    </group>)}
     <Moving controller={controller} name="top deck" offset={[0,1.2,0]}>
-      <Block p={[0,2.08,0]} s={[4.4,.51,1.4]} color="#c4c5bd" r={.12} metal={.82} rough={.36}/>
-      <Disc p={[1.38,2.43,0]} r={.34} h={.21} color="#a3a59e" metal={.8}/>
-      {Array.from({length:24},(_,i)=><Block key={i} p={[1.38+.335*Math.cos(i*Math.PI/12),2.43,.335*Math.sin(i*Math.PI/12)]} s={[.04,.19,.04]} color="#686b66" r={.01} metal={.6}/>)}
-      <Disc p={[1.38,2.58,0]} r={.15} h={.09} color="#333633" metal={.4}/>
-      <Disc p={[-1.55,2.43,0]} r={.28} h={.19} color="#666964" metal={.8}/>
-      <Block p={[-1.23,2.55,0]} s={[.7,.09,.18]} color="#b7b9b4" metal={.8} r={.04}/>
-      <Block p={[0,2.39,0]} s={[.58,.12,.44]} color="#777a75" metal={.8}/>
+      {box("top metal plate",[0,2.13,0],[4.42,.49,1.43],.12,mats.plate)}
+      {box("viewfinder surround",[-1.36,2.14,.725],[.78,.32,.07],.036,mats.interior)}
+      {box("viewfinder glass",[-1.36,2.14,.768],[.63,.21,.035],.016,mats.glass)}
+      {box("rangefinder window",[1.35,2.14,.725],[.52,.28,.07],.028,mats.interior)}
+      {box("rangefinder glass",[1.35,2.14,.768],[.39,.17,.035],.012,mats.glass)}
+      {box("rear finder",[-1.36,2.13,-.73],[.56,.28,.12],.045,mats.interior)}
+      {box("rear finder glass",[-1.36,2.13,-.80],[.39,.16,.025],.01,mats.glass)}
+      <Mark text="ANALOG / 35" p={[0,2.15,.77]} w={1.02} color={edition==="chrome"?"#333633":spec.legend} rotation={[0,0,0]}/>
+      {disk("shutter speed dial",[1.25,2.48,0],.34,.19,mats.dial)}
+      {topRibs(1.25,2.48,0,.333,36)}
+      <Mark text="125  ·  250" p={[1.25,2.582,0]} w={.58} color={spec.legend}/>
+      {disk("shutter release",[1.84,2.44,0],.13,.13,mats.trim)}
+      {disk("rewind knob",[-1.65,2.46,0],.28,.16,mats.dial)}
+      {topRibs(-1.65,2.46,0,.27,28)}
+      {box("film advance lever",[1.56,2.58,-.29],[.78,.075,.17],.035,mats.trim)}
+      {box("hot shoe",[0,2.41,0],[.61,.10,.52],.025,mats.trim)}
+      {box("hot shoe insert",[0,2.47,0],[.41,.027,.39],.012,mats.interior)}
+      {[-.24,.24].map(x=><group key={x}>{box("shoe rail",[x,2.48,0],[.07,.05,.47],.015,mats.trim)}</group>)}
     </Moving>
-    <Block p={[-1.42,2.04,.72]} s={[.66,.32,.1]} color="#252c2b" r={.04}/>
-    <Block p={[-1.42,2.04,.785]} s={[.46,.19,.025]} color="#68827b" r={.02} rough={.18}/>
-    <Block p={[1.48,2.04,.72]} s={[.45,.3,.1]} color="#2e3634" r={.04}/>
-    <Mark text="ANALOG / 35" p={[1.35,1.66,.706]} w={1.25} color="#d2d1c5" rotation={[0,0,0]}/>
-    {Array.from({length:13},(_,i)=><Block key={i} p={[-1.98+i*.32,.72,-.687]} s={[.25,1.35,.018]} color="#3e403b" r={.008} rough={.9}/>)}
-    <Moving controller={controller} name="lens mount" offset={[0,0,.55]}>
-      <Disc p={[0,1.05,.78]} r={.92} h={.27} color="#bfc1b9" metal={.85} rotation={forward}/>
+    <Moving controller={controller} name="lens mount" offset={[0,0,.65]}>
+      <LensRing name="bayonet mounting flange" p={[0,1.13,.82]} outer={.94} inner={.65} depth={.24} material={mats.trim}/>
+      <LensRing name="mount inner lip" p={[0,1.13,.94]} outer={.76} inner={.61} depth={.08} material={mats.interior}/>
+      {Array.from({length:4},(_,i)=>{const a=i*Math.PI/2+Math.PI/4;return <group key={i}>{disk("mount screw",[.84*Math.cos(a),1.13+.84*Math.sin(a),.955],.042,.025,mats.dial,forward)}</group>;})}
     </Moving>
     <Moving controller={controller} name="focus barrel" offset={[0,0,1.55]}>
-      <Disc p={[0,1.05,1.2]} r={.78} h={.64} color="#292d2b" rotation={forward}/>
-      {Array.from({length:36},(_,i)=><Block key={i} p={[.77*Math.cos(i*Math.PI/18),1.05+.77*Math.sin(i*Math.PI/18),1.24]} s={[.05,.05,.43]} color="#494c46" r={.015}/>)}
-      <Disc p={[0,1.05,1.54]} r={.79} h={.12} color="#a3a69f" metal={.85} rotation={forward}/>
+      <LensRing name="hollow focus barrel" p={[0,1.13,1.27]} outer={.79} inner={.61} depth={.66} material={mats.barrel}/>
+      <LensRing name="machined focus ring" p={[0,1.13,1.18]} outer={.82} inner={.69} depth={.34} material={mats.dial}/>
+      {lensRibs(1.18,.82,64)}
+      <LensRing name="aperture collar" p={[0,1.13,1.50]} outer={.82} inner={.63} depth={.16} material={mats.trim}/>
+      <LensRing name="front engraving ring" p={[0,1.13,1.65]} outer={.82} inner={.64} depth={.15} material={mats.barrel}/>
+      <LensLegend p={[0,1.13,1.728]} color={spec.legend}/>
+      <Mark text="2.8  ·  4  ·  5.6  ·  8" p={[0,1.962,1.5]} w={1.00} color={spec.legend}/>
     </Moving>
     <Moving controller={controller} name="optical element" offset={[0,0,2.6]}>
-      <Disc p={[0,1.05,1.63]} r={.65} h={.15} color="#202b2c" metal={.5} rotation={forward}/>
-      <mesh position={[0,1.05,1.72]} scale={[.49,.49,.12]}><sphereGeometry args={[1,48,24]}/><meshPhysicalMaterial color="#496f6b" metalness={.35} roughness={.12} clearcoat={1}/></mesh>
-      <Mark text="35 mm" p={[0,.5,1.715]} w={.55} color="#d3d5cb" rotation={[0,0,0]}/>
+      <LensRing name="optical cell" p={[0,1.13,1.46]} outer={.60} inner={.54} depth={.40} material={mats.interior}/>
+      <mesh name="seven-sided aperture" position={[0,1.13,1.39]} geometry={iris} material={mats.interior} rotation={[0,0,.15]}/>
+      {Array.from({length:7},(_,i)=>{const a=i*Math.PI*2/7;return <mesh key={i} position={[.365*Math.cos(a),1.13+.365*Math.sin(a),1.392]} rotation={[0,0,a+.65]} material={mats.barrel}><boxGeometry args={[.31,.008,.003]}/></mesh>;})}
+      <mesh name="rear curved optical glass" position={[0,1.13,1.27]} scale={[.49,.49,.065]} material={mats.glass}><sphereGeometry args={[1,48,24]}/></mesh>
+      <mesh name="front convex coated glass" position={[0,1.13,1.62]} scale={[.535,.535,.115]} material={mats.glass}><sphereGeometry args={[1,64,32]}/></mesh>
+      <LensRing name="glass retaining ring" p={[0,1.13,1.68]} outer={.59} inner={.535} depth={.055} material={mats.trim}/>
     </Moving>
   </group>;
 }
-export default function CollectionModel({id,controller,gameBoyEdition=defaultGameBoyEdition,journalEdition=defaultJournalEdition}:{id:ExhibitId;controller:StudioController;gameBoyEdition?:GameBoyEditionId;journalEdition?:JournalEditionId}) {
-  return id==="002"?<Handheld controller={controller} edition={gameBoyEdition}/>:id==="003"?<Journal controller={controller} edition={journalEdition}/>:<CameraModel controller={controller}/>;
+export default function CollectionModel({id,controller,gameBoyEdition=defaultGameBoyEdition,journalEdition=defaultJournalEdition,cameraEdition=defaultCameraEdition}:{id:ExhibitId;controller:StudioController;gameBoyEdition?:GameBoyEditionId;journalEdition?:JournalEditionId;cameraEdition?:CameraEditionId}) {
+  return id==="002"?<Handheld controller={controller} edition={gameBoyEdition}/>:id==="003"?<Journal controller={controller} edition={journalEdition}/>:<CameraModel controller={controller} edition={cameraEdition}/>;
 }
