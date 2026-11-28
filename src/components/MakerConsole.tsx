@@ -4,6 +4,8 @@ import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import { plate, capGeometry } from "./geometry";
 import { materialPreset } from "./presets";
+import { defaultMakerEdition, makerEdition, type MakerEditionId } from "./editions";
+import { surfaceTexture } from "./surfaceTextures";
 export const PARTS = [
   "Bottom Case",
   "PCB",
@@ -24,14 +26,17 @@ export type Settings = {
   hidden: Part[];
 };
 const keys = ["ACC", "AI", "RPA", "DATA", "FLOW", "RUN"];
-export default function MakerConsole({ settings: s }: { settings: Settings }) {
+export default function MakerConsole({ settings: s, edition = defaultMakerEdition }: { settings: Settings; edition?: MakerEditionId }) {
+  const design = makerEdition(edition);
+  const textures = useMemo(() => ({ brushed: surfaceTexture(true), grain: surfaceTexture(false) }), []);
+  useEffect(() => () => Object.values(textures).forEach(texture => texture.dispose()), [textures]);
   const geo = useMemo(
     () => ({
-      bottom: plate(4.4, 4.5, 0.2, 0.35),
-      wall: plate(4.4, 4.5, 0.55, 0.35, [
+      bottom: plate(4.4, 4.5, 0.2, design.radius),
+      wall: plate(4.4, 4.5, 0.55, design.radius, [
         { x: 0, z: 0, w: 4.02, h: 4.12, r: 0.27 },
       ]),
-      top: plate(4.4, 4.5, 0.13, 0.35, [
+      top: plate(4.4, 4.5, 0.13, design.radius, [
         ...keys.map((_, i) => ({
           x: ((i % 3) - 1) * 1.12,
           z: 0.15 + Math.floor(i / 3) * 1.16,
@@ -42,16 +47,29 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
         { x: -0.64, z: -1.38, w: 2.05, h: 0.85, r: 0.12 },
         { x: 1.25, z: -1.38, w: 0.85, h: 0.85, r: 0.42 },
       ]),
-      pcb: plate(3.97, 4.04, 0.055, 0.22),
+      seam: plate(4.34, 4.44, .025, design.radius, [
+        { x: 0, z: 0, w: 4.02, h: 4.12, r: .2 },
+      ]),
+      pcb: plate(3.97, 4.04, 0.055, 0.65),
       cap: capGeometry(),
     }),
-    [],
+    [design.radius],
   );
   const mats = useMemo(
     () => ({
-      ivory: new THREE.MeshStandardMaterial({
-        color: materialPreset.ivory,
-        roughness: s.roughness,
+      shell: new THREE.MeshPhysicalMaterial({
+        color: design.shell,
+        roughness: design.roughness,
+        metalness: design.metalness,
+        anisotropy: design.anisotropy,
+        anisotropyRotation: 0,
+        bumpMap: edition === "aluminium" ? textures.brushed : textures.grain,
+        bumpScale: edition === "aluminium" ? .008 : .003,
+        transmission: edition === "frosted" ? s.transmission : 0,
+        thickness: .19,
+        ior: 1.58,
+        attenuationColor: "#eee7d5",
+        attenuationDistance: 5,
         wireframe: s.wire,
       }),
       pcb: new THREE.MeshStandardMaterial({
@@ -83,12 +101,11 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
         transmission: s.transmission,
         thickness: 0.18,
         ior: 1.46,
-        transparent: true,
         opacity: 1,
         wireframe: s.wire,
       }),
     }),
-    [s.roughness, s.wire, s.transmission],
+    [s.wire, s.transmission, design, edition, textures],
   );
   useEffect(() => () => { Object.values(geo).forEach(g => g.dispose()); }, [geo]);
   useEffect(() => () => { Object.values(mats).forEach(m => m.dispose()); }, [mats]);
@@ -105,7 +122,7 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
         name={name}
         position={p}
         args={size}
-        radius={r}
+        radius={Math.min(r, Math.min(...size) / 2 - .001)}
         smoothness={4}
         material={mat}
         castShadow
@@ -148,14 +165,14 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
         <>
           <mesh
             geometry={geo.bottom}
-            material={mats.ivory}
+            material={mats.shell}
             position={[0, 0.24, 0]}
             castShadow
             receiveShadow
           />
           <mesh
             geometry={geo.wall}
-            material={mats.ivory}
+            material={mats.shell}
             position={[0, 0.61, 0]}
             castShadow
             receiveShadow
@@ -185,6 +202,9 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
             mats.dark,
             0.04,
           )}
+          {[-1, 1].flatMap(x => [-1, 1].map(z => <mesh key={`boss-${x}-${z}`} position={[x * 1.92, .64, z * 1.95]} material={mats.shell}>
+            <cylinderGeometry args={[.13, .15, .55, 24]} />
+          </mesh>))}
           {label("MAKER / 01", [0, 0.345, 1.94], 1.2)}
         </>,
       )}
@@ -198,8 +218,8 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
             receiveShadow
           />
           {Array.from({length:18},(_,i)=>{
-            const x=-1.75+i*.19, z=-1.65+(i%5)*.23;
-            const points=[new THREE.Vector3(x,.515,-1.85),new THREE.Vector3(x,.515,z),new THREE.Vector3(x+.13,.515,z+.13),new THREE.Vector3(x+.13,.515,1.7)];
+            const x=-1.55+i*.17, z=-1.55+(i%5)*.23;
+            const points=[new THREE.Vector3(x,.54,-1.7),new THREE.Vector3(x,.54,z),new THREE.Vector3(x+.13,.54,z+.13),new THREE.Vector3(x+.13,.54,1.6)];
             return <group key={i}>
               {points.slice(1).map((end,j)=>{
                 const start=points[j], mid=start.clone().add(end).multiplyScalar(.5);
@@ -212,7 +232,7 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
             [-1, 1].map((z) => (
               <mesh
                 key={`${x}${z}`}
-                position={[x * 1.72, 0.53, z * 1.8]}
+                position={[x * 1.6, 0.54, z * 1.65]}
                 rotation={[-Math.PI / 2, 0, 0]}
                 material={mats.gold}
               >
@@ -252,13 +272,14 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
         <>
           <mesh
             geometry={geo.top}
-            material={mats.frost}
+            material={mats.shell}
             position={[0, 0.98, 0]}
             castShadow
             receiveShadow
           />
-          {label("M A K E R   C O N S O L E   /   0 1", [0, 1.08, -1.99], 2.8)}
-          {label("ASSEMBLED WITH INTENT", [0, 1.08, 2], 1.8)}
+          <mesh geometry={geo.seam} material={edition === "graphite" ? mats.metal : mats.dark} position={[0, .912, 0]} />
+          {label("M A K E R   C O N S O L E   /   0 1", [0, 1.08, -1.99], 2.8, design.shellLegend)}
+          {label(edition === "frosted" ? "POLYCARBONATE / 01" : edition === "aluminium" ? "CNC ALUMINIUM / 02" : "ANODISED / 03", [0, 1.08, 2], 1.8, design.shellLegend)}
         </>,
       )}
       {group(
@@ -278,10 +299,10 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
             mats.lcd,
             0.04,
           )}
-          <group name="lcd-ready">{label("READY_   01", [-0.64, 1.037, -1.45], 1.5)}</group>
-          <group name="lcd-test" visible={false}>{label("8888 / TEST", [-0.64, 1.037, -1.45], 1.5)}</group>
-          <group name="lcd-start" visible={false}>{label("BOOTING...", [-0.64, 1.037, -1.45], 1.5)}</group>
-          {label("AI / AUTOMATION", [-0.64, 1.037, -1.22], 1.44)}
+          <group name="lcd-ready">{label("READY_   01", [-0.64, 1.04, -1.45], 1.5)}</group>
+          <group name="lcd-test" visible={false}>{label("8888 / TEST", [-0.64, 1.04, -1.45], 1.5)}</group>
+          <group name="lcd-start" visible={false}>{label("BOOTING...", [-0.64, 1.04, -1.45], 1.5)}</group>
+          {label("AI / AUTOMATION", [-0.64, 1.04, -1.22], 1.44)}
         </>,
       )}
       {group(
@@ -321,7 +342,7 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
             >
               <mesh geometry={geo.cap} castShadow receiveShadow>
                 <meshStandardMaterial
-                  color={i === 5 ? "#af6145" : i === 1 ? "#717b50" : "#e1dac6"}
+                  color={i === 5 ? "#af6145" : i === 1 ? "#717b50" : design.key}
                   roughness={s.roughness}
                   wireframe={s.wire}
                 />
@@ -330,7 +351,7 @@ export default function MakerConsole({ settings: s }: { settings: Settings }) {
                 k,
                 [0, 0.39, 0.03],
                 0.53,
-                i === 1 || i === 5 ? "#f1e8d4" : "#3b4037",
+                i === 1 || i === 5 ? "#f1e8d4" : design.legend,
               )}
             </group>
           ))}

@@ -1,221 +1,319 @@
 # TING — The Maker's Studio
 
-## Landing Page V1 — approved direction
-Industrial Design Portfolio × Digital Museum. A personal exhibition, not a SaaS template or a hardware sales site. TING is an accounting professional with five years of work experience in Japan, currently preparing for CPA, interested in RPA, AI, Game Boy assembly, leather notebook craft and retro photography. The Accounting Maker brand is a shared initiative; do not claim completed client projects or CPA certification.
+> Design specification · Revision 2 — Object Design Editions  
+> Baseline: Task 004 / Object Collection  
+> Next milestone: Task 005 / Maker Console Editions
 
-## Visual system
-- Warm gallery white #F4F3EE, ink #20211F, muted #64665D, accent #D35C37. Preserve existing object's ivory/olive/terracotta materials.
-- Oversized editorial sans-serif typography, tight tracking, small monospace exhibition labels, generous negative space, fine rules, asymmetric 12-column compositions. No generic rounded cards, gradients, decorative particles or stock icon grids.
-- Full-viewport opening exhibition with large real 3D object, title and restrained metadata. Dark contrasting About section; light editorial Work and Collection sections; strong contact closing.
-- Reference: https://recent.design/i/jxpvlxl-ai-generated-macro-pad-3d-model and https://recent.design/i/qkfor3e-3d-product-explorations .
+This document defines the long-term visual direction, interaction contract, 3D quality standard and development roadmap. Individual implementation scope and acceptance details belong in the corresponding task files. The current specification supersedes conflicting historical requirements from Tasks 001–004; earlier task files remain engineering references.
 
-## Interaction
-Entry: assembled OBJECT 001 / MAKER CONSOLE, drag to orbit. Wheel scroll must scroll page, not zoom canvas. Sticky canvas within opening chapter only. Scroll progress drives existing exploded-view controller from 0 to 1; keep object fully visible and hold final exploded view briefly, then reveal TING introduction. No compulsory reassembly before About; reverse scroll reassembles naturally. No scroll hijacking. Touch users retain vertical page scrolling. Reduced-motion users see static assembled scene or descriptive fallback. Essential content is HTML.
+## 1. Creative direction
 
-## Information architecture
-1. Opening exhibition — THE MAKER'S STUDIO / OBJECT 001.
-2. About — HELLO, I'M TING. Accountant. Maker. Curious mind. Include Japan experience, CPA in progress, accounting, automation and personal interests.
-3. Work — accounting workflows, RPA and AI project explorations; distinguish offerings from verified completed work.
-4. Collection — numbered exhibits; future OBJECT 002 Game Boy, 003 Leather Journal, 004 Film Camera. Do not build additional 3D models in V1 or imply they are available.
-5. Collaboration — AI, automation, better workflows. Real contact details must be supplied before launch; no invented email or dead CTA.
-10 identity tags: Accounting Maker, Automation Crafter, AI Explorer, Workflow Optimizer, Systematic Thinker, Retro Tech Lover, Leather Crafter, Film Photography Enthusiast, Japan Experience, CPA in Progress.
+**Industrial Design Portfolio × Digital Museum**  
+**Soft Industrial Craft / Retro Tech Minimalism**
 
-## Implementation boundary
-Use task2-motion-studio as baseline. Preserve /playground and existing model, motion rig, materials and presets. Production home is /. No intermediate prototype or new framework. Test desktop/mobile, forward/reverse scroll, drag, fallback, lint/typecheck/build. Visual approval and real contact details are launch gates.
+A personal exhibition, not a SaaS template, online shop or hardware sales site. The site should feel like a curated industrial design archive, with carefully designed objects that express the person behind them.
 
----
+The central metaphor is **Disassemble → Understand → Reassemble**. It represents curiosity, craftsmanship, accounting, workflow optimisation and intelligent automation.
 
-# Historical 3D specification (Tasks 001–002)
-The following is retained for engineering reference. The V1 interaction and layout above supersede conflicting earlier landing-page requirements.
+TING is an accounting professional with five years of work experience in Japan, currently preparing for CPA, interested in RPA, AI, Game Boy assembly, leather notebook craft and retro photography. The Accounting Maker brand is a shared initiative. Do not claim CPA certification or completed client projects without evidence.
 
-# 3D Art Direction & Motion Design
-
-## Task 001 implementation — 2026-11-26
-
-Scope: standalone `/playground`, using Next.js, TypeScript, React Three Fiber and drei. Warm ivory studio, separate inspection sidebar, six camera presets. Original six-key Maker Console with olive AI and terracotta RUN keycaps, LCD, knurled metal rotary encoder, frosted perforated cover, ivory perimeter enclosure, circuit board and visible fasteners.
-
-Geometry strategy: beveled extruded rounded outlines with real holes, curved custom keycaps, cylindrical machined details and individually named assembly groups. Group axes use Y-up; encoder rotates around Y and key presses follow local Y. Printed legends are generated textures on actual geometry. Future exploded-view work should store assembled transforms before applying offsets.
-
-Task 001 establishes geometry and adjustable PBR studio foundations. Task 002 refines materials and lighting; Tasks 003–006 remain separate work. No formal landing-page content or scroll animation is implemented here.
-
-## 1. Creative Direction
-
-**Style:** Soft Industrial Craft / Retro Tech Minimalism
-
-The website should combine professional credibility with tactile, nostalgic, and playful industrial design.
-
-The central visual metaphor is:
-
-**Disassemble → Understand → Reassemble**
-
-This represents the owner's passion for craftsmanship, retro hardware, accounting, process optimisation, and intelligent automation.
-
-### Visual References
+### Visual references
 
 - https://recent.design/i/jxpvlxl-ai-generated-macro-pad-3d-model
 - https://recent.design/i/qkfor3e-3d-product-explorations
 
-Use these references for visual quality, material treatment, product composition, and mechanical animation language. Do not directly replicate the original product designs.
+Use these for product composition, quality of surfaces, lighting, visual hierarchy and mechanical motion. Do not directly replicate the referenced designs or imply affiliation with manufacturers.
 
-## 2. Signature 3D Object — The Maker Console
+## 2. Visual system
 
-Create an original retro-inspired electronic device combining:
+| Token | Value |
+| --- | --- |
+| Gallery paper | `#F4F3EE` |
+| Ink | `#20211F` |
+| Muted text | `#64665D` |
+| Accent | `#D35C37` |
 
-- Game Boy-inspired form factor
-- Mechanical macro pad
-- Calculator elements
-- Physical knobs and buttons
-- Retro monochrome LCD
-- Translucent plastic casing
-- Subtle leather details
+- Oversized editorial sans-serif typography, tight tracking, small monospace exhibition labels, generous negative space, fine rules and asymmetric compositions.
+- Large real-time 3D objects are the primary visual focus. Preserve adequate separation between the hero title, object, metadata and controls.
+- Warm neutral exhibition background; dark contrasting About and Collaboration sections; light editorial Work and Collection sections.
+- Avoid generic rounded SaaS cards, gradients, stock icon grids, neon lighting, excessive bloom, decorative particles and toy-like geometry.
+- The UI should remain quiet even when an object's material or silhouette is expressive. Do not recolour the whole website when an edition changes.
 
-The object serves as a symbolic representation of the personal brand rather than a commercial hardware product.
+## 3. Information architecture
 
-### Component Structure
+1. **Opening exhibition:** The Maker's Studio — four objects sharing one full-viewport horizontal gallery. Default: OBJECT 001, assembled, default edition.
+2. **About:** Hello, I'm Ting. Accountant. Maker. Curious mind. Include Japan experience, CPA in progress, accounting, automation and personal interests.
+3. **Work:** Accounting workflows, RPA and AI explorations. Distinguish offered services from verified completed work.
+4. **Collection:** Objects of curiosity — a compact visual index of the four exhibits, with preview images of the actual models, object numbers, names and short descriptions. Clicking an image or Explore object returns to the corresponding hero exhibit. Do not duplicate full-sized live 3D scenes in this section.
+5. **Collaboration:** AI, automation, better workflows. Real contact details must be supplied before enabling contact CTAs. Do not invent email addresses or dead links.
 
-Every major component must be independently manipulable:
+Identity tags: Accounting Maker, Automation Crafter, AI Explorer, Workflow Optimizer, Systematic Thinker, Retro Tech Lover, Leather Crafter, Film Photography Enthusiast, Japan Experience, CPA in Progress.
 
-- Bottom enclosure
-- PCB and electronic components
-- Top enclosure
-- LCD screen
-- Mechanical switches
-- Keycaps
-- Rotary encoder
-- Screws and connectors
+## 4. Object collection and design editions
 
-Use meaningful mesh names and maintain consistent local origins for animation.
+An **Object** represents a distinct physical product and personal interest. An **Edition** represents an alternative industrial design of that same object. These are two independent dimensions of navigation.
 
-## 3. Material & Lighting
+Each object will initially have three selectable editions. Future editions can be added without changing the other objects or the website layout. An edition is not a separate exhibit, page or mandatory scroll chapter.
 
-- Warm ivory matte plastic
-- Translucent frosted polycarbonate
-- Muted olive-green keycaps
-- Terracotta accent keys
-- Brushed aluminium
-- Cognac brown leather
-- Dark olive monochrome LCD
+### OBJECT 001 — Maker Console
 
-Use physically based materials (PBR), soft studio lighting, ambient occlusion, and soft contact shadows.
+**Accounting · Automation · AI**
 
-Avoid neon lighting, excessive bloom, glossy cyberpunk aesthetics, and generic low-quality cartoon objects.
+Original retro-inspired device combining a mechanical macro pad, calculator elements, LCD, physical rotary knob and tactile keys. Retain its six-key functional identity, olive AI and terracotta RUN accents where appropriate, and original assembly structure.
 
-## 4. Required Animations
+| Edition | Art direction | Distinctive details |
+| --- | --- | --- |
+| 01 · Frosted Polycarbonate (default) | Warm ivory, translucent frost, olive and terracotta | Real shell thickness, softened translucency, visible internal components, tactile keycaps and crisp LCD |
+| 02 · Brushed Aluminium | Satin silver CNC-style body, contrasting keys | Directional brushed grain, machined chamfers, metal encoder, precise fasteners and seams |
+| 03 · Anodised Graphite | Dark graphite metal, restrained accents | Fine bead-blasted/anodised finish, readable legends, contrasting metal edges and subtle reflections |
 
-### M01 — Hero Entrance
+Independently manipulable groups: bottom enclosure, PCB and components, top enclosure, LCD, mechanical switches, keycaps, rotary encoder, screws/connectors. Preserve existing Motion Studio capabilities.
 
-- Duration: 1.2–1.8 seconds
-- Reveal the complete 3D object with subtle translation and rotation.
-- Maintain a stable composition.
-- Do not delay access to the main content.
+### OBJECT 002 — Game Boy
 
-### M02 — Idle Motion
+**Curiosity · Assembly · Retro Tech**
 
-- Subtle breathing motion when the object is visible.
-- Rotation amplitude: approximately ±3 degrees.
-- Slow, calm motion.
-- Pause when outside the viewport.
+Retro handheld assembly study; no implied manufacturer affiliation.
 
-### M03 — Pointer Interaction
+| Edition | Art direction | Distinctive details |
+| --- | --- | --- |
+| 01 · Classic (default) | Warm grey/ivory moulded plastic, muted burgundy controls | Recognisable handheld proportions, recessed display, D-pad, A/B controls, speaker grille, battery door and cartridge |
+| 02 · Transparent | Translucent tinted shell, proposed atomic purple | Visible PCB, fasteners, ribs, shell thickness and layered internal parts |
+| 03 · CNC Machined | Silver machined aluminium | Brushed or bead-blasted housing, clean chamfers, functional openings and metal/plastic contrast |
 
-- Respond to mouse position with subtle 3D rotation.
-- Maximum rotation: approximately ±8 degrees.
-- Smooth interpolation and damped return.
-- Disable pointer tracking on touch devices.
+Disassembly should reveal coherent internal layers, with front/rear housing, screen, controls, PCB and cartridge moving along meaningful assembly axes.
 
-### M04 — Scroll-driven Exploded View
+### OBJECT 003 — Leather Journal
 
-- Animate individual 3D components along their own assembly axes.
-- Separate the keycaps, switches, casing, LCD, PCB, and base.
-- Preserve physical dimensions and visual alignment.
-- Reveal internal details progressively.
-- Synchronise animation progress with scroll position.
-- Support reversible playback when scrolling upwards.
+**Craftsmanship · Patience · Details**
 
-### M05 — Mechanical Reassembly
+Handcrafted leather notebook with believable cover construction, paper block, spine, stitching and closure.
 
-- Reassemble components in their physically appropriate order.
-- Use staggered timing.
-- Add subtle mechanical settling.
-- Avoid exaggerated bouncing or elastic effects.
+| Edition | Art direction | Distinctive details |
+| --- | --- | --- |
+| 01 · Cognac (default) | Vegetable-tanned warm brown leather | Natural grain, layered cut edges, warm thread, cream paper |
+| 02 · Noir | Black fine-grain leather | Controlled highlights, contrasting or tonal thread, dark hardware |
+| 03 · Vintage Patina | Proposed dark olive aged leather | Localised wear, organic colour variation, subtle creases, aged brass closure |
 
-### M06 — Tactile Button Interaction
+The primary motion is opening the cover around the actual spine hinge. Paper and closure should behave plausibly; do not force an electronic exploded-view metaphor onto the notebook.
 
-- Keycaps move vertically when pressed.
-- Rotary knobs rotate around their actual axes.
-- LCD content responds to selected interaction.
-- Any sound effect must be optional and disabled by default.
+### OBJECT 004 — Film Camera
 
-### M07 — Supporting 3D Objects
+**Observation · Perspective · Memory**
 
-Service and project cards may contain smaller retro-inspired objects.
+Original retro analogue camera study with recognisable body, lens barrel, optical elements, shutter control, film advance, viewfinder and adjustment dials.
 
-Use restrained hover rotation and depth changes. Prefer pre-rendered images for secondary objects unless real-time 3D interaction is necessary.
+| Edition | Art direction | Distinctive details |
+| --- | --- | --- |
+| 01 · Silver Chrome (default) | Silver metal and dark leatherette | Layered metal finishes, leatherette grain, knurled rings and optical reflections |
+| 02 · Matte Black | Dark matte body and lens | Subtle material contrast, legible engraved markings, satin control surfaces |
+| 03 · Heritage Brass | Black-painted aged brass | Localised exposed brass at high-wear edges, fine patina and restrained weathering |
 
-## 5. Animation Principles
+Reveal lens assemblies and camera construction through purposeful motion. Keep optical parts, lens rings and relevant body assemblies independently named.
 
-- Mechanical rather than decorative.
-- Tactile rather than flashy.
-- Smooth rather than fast.
-- Purposeful rather than distracting.
-- Every movement should communicate structure, craftsmanship, or functionality.
+The edition names and detailed palettes above are proposed art directions. They may be refined during each object's visual review; do not sacrifice quality to preserve a provisional colour choice. The required scope is three genuinely differentiated editions per completed object.
 
-Do not use generic floating spheres, excessive particles, random object rotations, or animation solely for decoration.
+## 5. Interaction contract
 
-## 6. Technical Implementation
+### 5.1 Object navigation — horizontal gallery
 
-Recommended stack:
+- All four objects occupy the same hero exhibition position. The heading, gallery structure and page scroll remain stable.
+- Previous/next arrows, numbered object indicators and touch swipe outside the model support object navigation. The incoming exhibit moves in the appropriate horizontal direction; aim for a restrained coordinated outgoing transition when feasible.
+- Default order: Maker Console → Game Boy → Leather Journal → Film Camera. No autoplay and no requirement to visit every object before About.
+- Update object name, number, tags, edition options and model together. Avoid stale controls from the previous object.
+- Keep object switching distinct from drag-to-orbit and vertical scrolling. Do not bind an ordinary mouse drag on the 3D model to slide navigation.
 
-- Next.js
-- TypeScript
-- Three.js
-- React Three Fiber
-- @react-three/drei
-- GSAP
-- GSAP ScrollTrigger
+### 5.2 Edition navigation — material and design selector
 
-Prefer procedural geometry for the initial prototype.
+Add a compact, reusable **Design Edition Selector** within the current hero. Place it near the object metadata without competing with the 3D canvas or horizontal gallery controls.
 
-Complex assets may be created externally and imported as GLB/glTF models.
+Example:
 
-The signature object must be rendered as a real 3D scene with independently animatable components.
+```text
+OBJECT — 001
+Maker Console
+Accounting · Automation · AI
 
-Do not substitute the primary exploded-view experience with static images, GIFs, flat CSS layers, or simple image rotation without explicit approval.
+DESIGN EDITION  02 / 03
+[ Frosted ] [ Aluminium ] [ Graphite ]
+Brushed Aluminium
 
-## 7. Performance & Accessibility
+←  001  002  003  004  →
+```
 
-- Target 60 FPS on capable desktop devices.
-- Target at least 30 FPS on supported mobile devices.
-- Use adaptive device pixel ratio.
-- Lazy-load non-critical 3D assets.
-- Pause rendering when scenes are off-screen.
-- Use on-demand rendering when animations are idle.
-- Provide a static fallback when WebGL is unavailable.
-- Respect prefers-reduced-motion.
-- All essential website content must remain accessible without WebGL.
-- Never block normal scrolling or navigation.
+- Use small material swatches or previews with readable names, a visible selected state and keyboard-accessible buttons. Colour alone must not identify an edition.
+- Each object owns its edition options; avoid a universal palette that applies the same materials to all objects.
+- Switching an edition updates the actual 3D materials, textures and edition-specific geometry/details, not an image overlay.
+- Keep camera/orbit angle, object scale, page position and normalised motion progress when changing editions. Do not remount the canvas merely to change material.
+- Remember each object's last selected edition during the current page session; on a fresh visit start at the default edition. Persistent storage is optional, not required.
+- Objects not yet upgraded remain on their existing single edition. Hide the selector when only one edition is available; never expose placeholder or nonfunctional options.
+- No compulsory animations or autoplay on edition selection. Use a brief restrained transition where it can be done without visual glitches or resetting interactions.
 
-## 8. Acceptance Criteria
+### 5.3 Model inspection and scroll motion
 
-- The object is visually convincing from multiple angles.
-- All major mechanical components can move independently.
-- Exploded-view animation is smooth and reversible.
-- No unintended mesh intersections during disassembly.
-- Components return to their exact assembled positions.
-- Materials and lighting maintain visual consistency.
-- The experience works across desktop and mobile layouts.
-- The landing page remains usable if 3D rendering fails.
+- Mouse drag rotates the active model. Wheel scroll moves the page rather than zooming the camera. Touch users retain normal vertical scrolling; touch inspection must not conflict with navigation.
+- Sticky canvas is limited to the opening chapter. Scroll drives the current object's motion from 0 to 1, followed by the About section. Reverse scroll naturally reverses the motion.
+- No compulsory reassembly before About and no additional mandatory pinned chapters for other objects or editions.
+- Maintain stable framing as the object opens or explodes. Preserve all meaningful parts in view; do not allow clipping or excessive camera movement.
+- Preserve exact assembled transforms, meaningful component names and local origins. Use Y-up for existing procedural assemblies and consistent motion axes.
+- Preserve `/playground` inspection controls, including key press, rotary interaction, LCD boot and exploded-view/reassembly timeline. Do not impose playground-only controls on the public landing page.
+- Reduced-motion users see static assembled models or a descriptive fallback. The main content remains accessible HTML.
 
-## 9. Development Order
+## 6. Product fidelity and rendering quality
 
-1. Build a standalone 3D object prototype.
-2. Implement exploded-view and reassembly animations.
-3. Validate geometry, materials, lighting, and performance.
-4. Obtain visual approval.
-5. Integrate the approved scene into the landing page.
-6. Implement supporting interactions and responsive layouts.
-7. Complete performance and accessibility testing.
+The initial procedural models are structural prototypes. The next phase is product-quality refinement. A different colour or a single metalness adjustment does not count as a distinct high-quality edition.
 
-## Task 002 implementation candidate
+### Geometry
 
-The standalone playground adds a profile-based motion controller, component registry and timeline, with independent key and rotary-cap control, LCD boot stages and scrubber. Presets are shared in presets.ts. The original landing-page motion requirements above remain unchanged; studio M01–M06 are defined separately in task2.md. See MOTION.md for pending visual and runtime checks.
+- Refine silhouettes, proportions, bevel radii, edge transitions, gaps, seams, tolerances, thickness, actual openings, fasteners and recognisable functional details.
+- Use real geometry for silhouette-defining features and moving parts. Use normal/bump textures for small surface details that do not affect silhouettes.
+- Avoid exposed intersections, floating parts, impossible construction and large featureless boxes. Inspect each model from the front, back, side and three-quarter views.
+- Share geometry when it truly represents the same construction; allow edition-specific shell shapes, keycaps, lens rings, closures or trim when needed. Do not force all editions to have identical geometry.
+
+### Physically based materials (PBR)
+
+| Surface | Required treatment |
+| --- | --- |
+| Brushed metal | Directional fine grain, anisotropic reflections where supported, appropriate metalness and roughness, precise edge highlights |
+| Anodised metal | Fine satin or matte finish, subtle surface variation, believable distinction from black plastic |
+| Moulded plastic | Nonmetallic response, fine moulded grain, plausible sheen and seams |
+| Frosted/transparent polymer | Transmission, IOR, roughness, real shell thickness, controlled visibility of interior parts |
+| Leather | Natural grain, micro-normal detail, local roughness/colour variation, stitching and cut edges |
+| Paper | Layered page edges, nonmetallic rough surface, subtle fibres and natural off-white tones |
+| Optical glass | Curved layered elements, plausible reflections/refraction and coating tint; distinguish from opaque painted discs |
+| Aged surfaces | Localised wear and patina consistent with handling, not uniform random noise |
+
+Use base colour, roughness, normal/bump, metalness and ambient occlusion maps as appropriate. Not every material needs every map. Use correct colour spaces: colour/emissive textures in sRGB; data maps in linear/no colour space according to the renderer. Ensure consistent UVs and realistic texture scale. Configure transmission, IOR, clearcoat and anisotropy only where physically justified.
+
+### Lighting and presentation
+
+- Use a shared product photography studio with broad softbox key lighting, controlled fill, rim highlights, environment reflections and soft contact shadows.
+- Use an HDRI or deliberately arranged studio lightformers to make reflective surfaces visibly metallic. Metalness alone is insufficient.
+- Keep exposure and tone mapping consistent across editions; avoid blown highlights, crushed blacks, excessive bloom or mirror-like plastic.
+- Each object's default camera angle should showcase its recognisable features and material. Allow per-object framing but maintain a coherent visual size within the hero.
+- Archive thumbnails should depict the actual model's default edition, not generic stock photographs. The selected edition must be identifiable in the hero; do not render all twelve edition previews on initial page load.
+
+## 7. Technical architecture
+
+Retain Next.js, TypeScript, Three.js, React Three Fiber and `@react-three/drei`. Preserve the existing motion controller and static export architecture; do not introduce a backend or new framework for this feature.
+
+```mermaid
+flowchart TD
+    A[Hero Gallery] --> B[Object Registry]
+    A --> C[Edition Selector]
+    B --> D[Active Object]
+    C --> E[Edition Registry]
+    E --> F[Material and Texture Library]
+    E --> G[Optional Geometry Variants]
+    D --> H[Shared Scene]
+    F --> H
+    G --> H
+    H --> I[Lighting and Camera]
+    H --> J[Motion Controller]
+    B --> K[Archive Previews]
+```
+
+### Design boundaries
+
+- Object Registry: stable object ID, metadata, default edition ID, available editions and model entry point.
+- Edition Registry: stable edition ID, name, swatch, material presets, optional texture assets and geometry options.
+- Material/Texture Library: reusable physical material definitions, texture loading, caching and cleanup. Material instances must not accidentally share mutable state between editions.
+- Scene: camera, studio environment, controls, render loop and current object. Keep one active main hero canvas; preserve orbit and motion progress on edition change.
+- Model: named assembly groups with a clear interface for edition-dependent styling/geometry. Maintain existing motion compatibility; rebind named parts and reapply progress if a geometry variant replaces meshes.
+- Archive: lightweight still images generated from actual default-edition models; prefer cached or pre-rendered assets where reliable. Runtime capture is acceptable if bounded and disposed after capture.
+
+Suggested implementation shape (illustrative, not a mandatory file layout):
+
+```ts
+type ObjectId = "001" | "002" | "003" | "004";
+
+type Edition = {
+  id: string;
+  name: string;
+  swatch: string;
+  materialPreset: string;
+  geometryVariant?: string;
+};
+
+type Exhibit = {
+  id: ObjectId;
+  defaultEditionId: string;
+  editions: Edition[];
+};
+```
+
+### Procedural geometry vs external assets
+
+Retain procedural Three.js geometry when it meets the quality target and supports motion. Blender/glTF/GLB is an optional route for complex forms, accurate UVs or detailed material work that is impractical in code. Imported assets must retain independently addressable moving parts and documented scale, axes, naming, texture licences and source. Do not replace the interactive hero with a static render or GIF.
+
+External assets must be licence-verified and locally bundled when needed. Do not rely on hotlinked third-party textures or remote assets that break static hosting. Use basePath-compatible asset URLs and verify the deployed site, not just localhost.
+
+## 8. Performance and accessibility
+
+- Aim for 60 FPS on capable desktops and at least 30 FPS on supported mobile devices, measured on representative hardware rather than asserted without tests.
+- Bound DPR, texture sizes and geometry complexity. Load the active edition first; prefetch neighbouring assets only when useful. Avoid simultaneously mounting twelve real-time scenes.
+- Use demand rendering when idle; pause unnecessary off-screen rendering. Dispose replaced geometry, textures and materials when no longer referenced.
+- Prevent stale asynchronous asset loads from overwriting the currently selected edition. Show a restrained loading/fallback state if necessary.
+- Keyboard-operable edition and object controls, accessible names, selected state and visible focus indicators. Preserve normal page navigation and legible content without WebGL.
+- Respect `prefers-reduced-motion`; provide a static fallback or descriptive text if rendering is unavailable.
+- Verify desktop and mobile layout, normal scroll, swipe and drag. No overlapping controls or text/model collisions.
+
+## 9. Development roadmap — one object at a time
+
+Do not implement all twelve editions in parallel. Complete and visually approve the three editions of one object before moving on. Shared infrastructure is developed incrementally as required, not as a separate speculative platform project.
+
+| Task | Scope | Completion gate |
+| --- | --- | --- |
+| 001 | Maker Console geometry and playground | Historical baseline |
+| 002 | Motion Studio | Historical baseline |
+| 003 | Landing Page V1 | Historical baseline |
+| 004 | Four-object horizontal collection and archive previews | Current baseline |
+| 005 | Maker Console: three editions; reusable edition selector, registry and shared rendering/material foundations | All three versions visually approved, interactions preserved, build passes |
+| 006 | Game Boy: three editions, using/refining Task 005 foundations | All three versions visually approved; Maker Console regression checks |
+| 007 | Leather Journal: three editions and credible leather/paper/hinge detail | All three versions visually approved; prior-object regression checks |
+| 008 | Film Camera: three editions and credible metal/glass/lens detail | All twelve editions available; full-site regression checks |
+
+Suggested task documents: `tasks/task5.md`, `tasks/task6.md`, `tasks/task7.md`, `tasks/task8.md` (follow the repository's actual task naming convention). Create the next task only when the preceding task has established the required design quality. Each task must identify its own assets, implementation scope, tests and open issues.
+
+Suggested feature branches, based on the latest accepted code:
+
+- `task5-maker-console-editions`
+- `task6-gameboy-editions`
+- `task7-journal-editions`
+- `task8-camera-editions`
+
+Branch and merge policy should follow the current repository workflow. Do not assume historical task branches still exist. Do not change the production deployment target without explicit approval.
+
+## 10. Per-object acceptance criteria
+
+A task is complete only when the following have been verified for its three editions:
+
+- [ ] Each edition has a coherent, recognisable industrial design and a visibly distinct material/design identity; not merely a colour change.
+- [ ] Product geometry, physical thickness, small details, materials, reflections and shadows are convincing at intended hero scale and from multiple angles.
+- [ ] Actual model materials/geometry update through the selector. No placeholder controls or duplicated navigation.
+- [ ] Camera orientation and scroll progress remain stable when switching editions; rapid switching does not leave stale meshes or textures.
+- [ ] Object switching, reverse scroll, orbit and existing playground controls still work. All moving components return to their assembled transforms.
+- [ ] No obvious unintended mesh intersections, clipping, broken texture coordinates or missing assets.
+- [ ] Desktop/mobile screenshots of all three assembled editions and representative opened/exploded views are captured for visual review under comparable lighting.
+- [ ] Mobile layout, reduced-motion and WebGL fallback are verified; performance is measured and reported.
+- [ ] Lint, TypeScript, production build and GitHub Pages static export pass using repository scripts and configuration.
+- [ ] Previously accepted objects/editions remain functional; archive thumbnails match the actual models.
+- [ ] Remaining visual or technical issues are documented. Owner visual approval is required before treating a model as finished or deploying it as an approved release.
+
+## 11. Deployment and engineering references
+
+Production home remains `/`; retain `/playground` and GitHub Pages static export compatibility. A successful compilation alone is not a deployment or a visual acceptance test. Check the actual deployment status and URL when publishing is explicitly requested.
+
+Historical specifications and engineering notes remain available in the existing task files and `MOTION.md`. The original six-key Maker Console uses rounded extruded geometry, real holes, curved custom keycaps, machined cylindrical details and independently named groups; the profile-based Motion Studio stores assembled transforms and applies reversible timelines. Preserve these capabilities as the model is refined. The historical entrance/idle/pointer motion concepts are optional art-direction references, not new mandatory features for Tasks 005–008.
+
+### Technical and asset references
+
+- Three.js MeshPhysicalMaterial: https://threejs.org/docs/pages/MeshPhysicalMaterial.html
+- Three.js MeshStandardMaterial: https://threejs.org/docs/pages/MeshStandardMaterial.html
+- Three.js color management: https://threejs.org/manual/en/color-management.html
+- React Three Fiber performance: https://r3f.docs.pmnd.rs/advanced/scaling-performance
+- Poly Haven (HDRI and textures): https://polyhaven.com/
+- ambientCG (PBR materials): https://ambientcg.com/
+- Blender: https://www.blender.org/
+
+Verify the specific asset licence and installed library documentation before use.

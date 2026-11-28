@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { StudioController } from "./motion/core";
 import { makerProfile } from "./motion/makerProfile";
+import EditionSelector from "./EditionSelector";
+import { defaultMakerEdition, makerEditions, type MakerEditionId } from "./editions";
 import AnimationStudio from "./motion/AnimationStudio";
 import { PARTS, type Settings } from "./MakerConsole";
 const Scene = dynamic(() => import("./Scene"), {
@@ -11,6 +13,7 @@ const Scene = dynamic(() => import("./Scene"), {
   loading: () => <div className="loading">Preparing the studio…</div>,
 });
 export default function Playground() {
+  const [edition, setEdition] = useState<MakerEditionId>(defaultMakerEdition);
   const [controller] = useState(() => new StudioController(makerProfile));
   const [s, set] = useState<Settings>({
     wire: false,
@@ -38,7 +41,7 @@ export default function Playground() {
             </h1>
             <p>A small instrument for big ideas.</p>
           </div>
-          <Scene settings={s} view={view} controller={controller} />
+          <Scene edition={edition} settings={s} view={view} controller={controller} />
           <div className="caption">
             <span>
               PROCEDURAL SERIES
@@ -76,6 +79,7 @@ export default function Playground() {
           </section>
           <section>
             <h2>02 / Surface & light</h2>
+            <EditionSelector choices={makerEditions} value={edition} onChange={setEdition}/>
             {[
               ["roughness", "Plastic roughness", 0.15, 0.95],
               ["transmission", "Panel translucency", 0, 1],
