@@ -56,3 +56,18 @@ export const journalEditions: readonly JournalEdition[] = [
 export function journalEdition(id:JournalEditionId) {
   return journalEditions.find(edition=>edition.id===id)!;
 }
+
+export type CameraEditionId = "chrome" | "matte" | "brass";
+export type CameraEdition = EditionChoice<CameraEditionId> & {
+  plate:string; plateRoughness:number; plateMetalness:number; trim:string;
+  barrel:string; dial:string; grip:string; legend:string; wear:number;
+};
+export const defaultCameraEdition: CameraEditionId = "chrome";
+export const cameraEditions: readonly CameraEdition[] = [
+  {id:"chrome",name:"Silver Chrome",label:"Chrome",swatch:"#c4c7c7",plate:"#c4c7c7",plateRoughness:.29,plateMetalness:1,trim:"#c9cccb",barrel:"#303333",dial:"#a5a9a9",grip:"#282b29",legend:"#e1dfd3",wear:0},
+  {id:"matte",name:"Matte Black",label:"Matte",swatch:"#303437",plate:"#292d30",plateRoughness:.69,plateMetalness:0,trim:"#555b5d",barrel:"#292d30",dial:"#43484a",grip:"#202324",legend:"#e9e7dc",wear:0},
+  {id:"brass",name:"Heritage Brass",label:"Heritage",swatch:"#806b45",plate:"#302c28",plateRoughness:.45,plateMetalness:0,trim:"#a58a54",barrel:"#302e29",dial:"#64563d",grip:"#37342e",legend:"#dfcba6",wear:.72},
+];
+export function cameraEdition(id:CameraEditionId) {
+  return cameraEditions.find(edition=>edition.id===id)!;
+}
