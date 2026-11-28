@@ -5,8 +5,9 @@ import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { StudioController } from "./motion/core";
 import { plate } from "./geometry";
-import { defaultGameBoyEdition, gameBoyEdition, type GameBoyEditionId } from "./editions";
+import { defaultGameBoyEdition, gameBoyEdition, type GameBoyEditionId, defaultJournalEdition, journalEdition, type JournalEditionId } from "./editions";
 import { surfaceTexture } from "./surfaceTextures";
+import { leatherTextures } from "./leatherTextures";
 
 export type ExhibitId = "002" | "003" | "004";
 type Vec = [number, number, number];
@@ -113,24 +114,58 @@ function Handheld({controller,edition=defaultGameBoyEdition}:{controller:StudioC
     </Moving>
   </group>;
 }
-function Journal({controller}:{controller:StudioController}) {
-  const bump=useMemo(()=>{const c=document.createElement("canvas");c.width=c.height=128;const ctx=c.getContext("2d")!;const im=ctx.createImageData(128,128);for(let i=0;i<128*128;i++){const n=128+Math.round(35*Math.sin(i*12.9898)*Math.cos(i*78.233));im.data.set([n,n,n,255],i*4);}ctx.putImageData(im,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(4,5);return t;},[]);
-  useEffect(()=>()=>bump.dispose(),[bump]);
-  const leather="#985c37";
+function Journal({controller,edition=defaultJournalEdition}:{controller:StudioController;edition?:JournalEditionId}) {
+  const spec=journalEdition(edition);
+  const maps=useMemo(()=>leatherTextures(spec),[spec]);
+  useEffect(()=>()=>Object.values(maps).forEach(t=>t.dispose()),[maps]);
+  const leather=useMemo(()=>new THREE.MeshPhysicalMaterial({
+    color:"#ffffff",map:maps.colour,bumpMap:maps.height,bumpScale:spec.grain,
+    roughness:1,roughnessMap:maps.roughness,metalness:0,
+    sheen:.25,sheenColor:new THREE.Color(spec.leather),sheenRoughness:.8,
+    clearcoat:edition==="noir"?.12:.06,clearcoatRoughness:.65
+  }),[maps,spec,edition]);
+  useEffect(()=>()=>leather.dispose(),[leather]);
+  const cover=(y:number)=><>
+    <RoundedBox name="leather outer surface" position={[0,y,0]} args={[3.65,.13,4.75]} radius={.06} smoothness={5} material={leather} castShadow receiveShadow/>
+    <Block name="burnished leather cut edge" p={[0,y-.055,0]} s={[3.63,.045,4.73]} color={spec.edge} r={.02} rough={.62}/>
+    <Block name="suede lining" p={[0,y-.08,0]} s={[3.56,.036,4.66]} color={spec.lining} r={.016} rough={.94}/>
+  </>;
+  const stitches=(y:number)=><group name="saddle stitches">
+    {Array.from({length:26},(_,i)=><group key={i}>{[-1.59,1.59].map(x=><group key={x}>
+      <Disc p={[x,y-.004,-2.15+i*.172]} r={.018} h={.007} color={spec.hole}/>
+      <mesh position={[x,y+.009,-2.15+i*.172+.045]} rotation={[Math.PI/2,0,.12]}><capsuleGeometry args={[.013,.09,3,6]}/><meshStandardMaterial color={spec.thread} roughness={.84}/></mesh>
+    </group>)}</group>)}
+    {Array.from({length:18},(_,i)=><group key={i}>{[-2.15,2.15].map(z=><group key={z}>
+      <Disc p={[-1.52+i*.179,y-.004,z]} r={.018} h={.007} color={spec.hole}/>
+      <mesh position={[-1.52+i*.179+.045,y+.009,z]} rotation={[0,0,Math.PI/2]}><capsuleGeometry args={[.013,.09,3,6]}/><meshStandardMaterial color={spec.thread} roughness={.84}/></mesh>
+    </group>)}</group>)}
+  </group>;
   return <group name="Leather journal" rotation={[0,.12,0]}>
-    <Block p={[0,.09,0]} s={[3.65,.18,4.75]} color={leather} r={.13}/>
-    <Block p={[.02,.39,0]} s={[3.4,.49,4.46]} color="#e9dfc6" r={.06}/>
-    {Array.from({length:28},(_,i)=><group key={i}><Block p={[1.725,.16+i*.016,0]} s={[.012,.005,4.37]} color={i%3===0?"#b9a98b":"#d3c5aa"} r={.002}/><Block p={[.03,.16+i*.016,2.235]} s={[3.31,.005,.012]} color="#c8b99c" r={.002}/></group>)}
-    <Block p={[-1.78,.39,0]} s={[.23,.7,4.67]} color="#79492c" r={.11}/>
-    <Moving controller={controller} name="hinged leather cover" position={[-1.77,.69,0]} angle={2.35}>
-      <RoundedBox position={[1.77,.07,0]} args={[3.65,.17,4.75]} radius={.13} smoothness={4} castShadow receiveShadow><meshStandardMaterial color={leather} roughness={.83} bumpMap={bump} bumpScale={.045}/></RoundedBox>
-      {Array.from({length:24},(_,i)=><group key={i}>{[.18,3.36].map(x=><Block key={x} p={[x,.167,-2.15+i*.186]} s={[.025,.018,.095]} color="#d4a97a" r={.008}/>)}</group>)}
-      {Array.from({length:18},(_,i)=><group key={i}>{[-2.15,2.15].map(z=><Block key={z} p={[.23+i*.18,.167,z]} s={[.095,.018,.025]} color="#d4a97a" r={.008}/>)}</group>)}
-      <Mark text="FIELD NOTES" p={[1.77,.164,-.5]} w={1.6} color="#e3b98a"/>
-      <Block p={[3.43,.17,.2]} s={[.5,.12,.64]} color="#78472e" r={.08}/>
-      <Disc p={[3.45,.25,.2]} r={.105} h={.055} color="#b89a60" metal={.85}/>
+    <group name="back cover" rotation={[Math.PI,0,0]} position={[0,.11,0]}>{cover(0)}</group>
+    <RoundedBox name="bound paper block" position={[.045,.39,0]} args={[3.36,.49,4.44]} radius={.045} smoothness={3} castShadow receiveShadow><meshStandardMaterial color={spec.paper} roughness={.95}/></RoundedBox>
+    <group name="individual paper edges">
+      {Array.from({length:40},(_,i)=><group key={i}>
+        <Block p={[1.722+(Math.sin(i*3.7)*.009),.158+i*.0116,0]} s={[.012,.004,4.36]} color={i%5===0?spec.pageEdge:spec.paper} r={.002} rough={.97}/>
+        {[-1,1].map(z=><Block key={z} p={[.045,.158+i*.0116,z*(2.222+Math.sin(i*2.3)*.006)]} s={[3.28,.004,.012]} color={i%4===0?spec.pageEdge:spec.paper} r={.002} rough={.97}/>)}
+      </group>)}
+    </group>
+    <Block name="top ruled sheet" p={[.045,.64,0]} s={[3.28,.015,4.34]} color={spec.paper} r={.007} rough={.96}/>
+    {Array.from({length:23},(_,i)=><Block key={i} p={[.12,.649,-1.76+i*.153]} s={[2.78,.002,.009]} color={spec.pageEdge} r={.001} rough={1}/>)}
+    <Mark text="FIELD NOTES / 01" p={[.045,.651,-1.98]} w={1.28} color={spec.edge}/>
+    <RoundedBox name="flexible leather spine" position={[-1.74,.39,0]} args={[.23,.68,4.66]} radius={.108} smoothness={5} material={leather} castShadow receiveShadow/>
+    {[-2.02,2.02].map(z=><group key={z}><Block p={[-1.62,.39,z]} s={[.08,.48,.055]} color={spec.thread} r={.025}/><Block p={[-1.57,.625,z]} s={[.18,.04,.06]} color={spec.thread} r={.015}/></group>)}
+    <Moving controller={controller} name="hinged leather cover" position={[-1.77,.70,0]} angle={2.35}>
+      <group position={[1.77,.09,0]}>
+        {cover(0)}
+        {stitches(.066)}
+        <Mark text="FIELD NOTES" p={[0,.069,-.72]} w={1.45} color={spec.legend}/>
+        <Mark text="T / PERSONAL ARCHIVE" p={[0,.069,-.41]} w={1.02} color={spec.legend}/>
+        <RoundedBox name="leather closure strap" position={[1.63,.10,.25]} args={[.57,.09,.67]} radius={.04} smoothness={4} material={leather} castShadow receiveShadow/>
+        <mesh name="snap fastener" position={[1.59,.164,.25]}><cylinderGeometry args={[.105,.105,.05,48]}/><meshStandardMaterial color={spec.hardware} metalness={.93} roughness={spec.hardwareRoughness}/></mesh>
+        <mesh position={[1.59,.192,.25]} rotation={[-Math.PI/2,0,0]}><torusGeometry args={[.073,.007,8,40]}/><meshStandardMaterial color={spec.hardware} metalness={.95} roughness={spec.hardwareRoughness}/></mesh>
+      </group>
     </Moving>
-    <Block p={[.4,.25,2.38]} s={[.16,.025,.55]} color="#657351" r={.01}/>
+    <Block name="woven ribbon bookmark" p={[.4,.27,2.39]} s={[.16,.026,.55]} color={spec.ribbon} r={.009} rough={.98}/>
   </group>;
 }
 function CameraModel({controller}:{controller:StudioController}) {
@@ -167,6 +202,6 @@ function CameraModel({controller}:{controller:StudioController}) {
     </Moving>
   </group>;
 }
-export default function CollectionModel({id,controller,gameBoyEdition=defaultGameBoyEdition}:{id:ExhibitId;controller:StudioController;gameBoyEdition?:GameBoyEditionId}) {
-  return id==="002"?<Handheld controller={controller} edition={gameBoyEdition}/>:id==="003"?<Journal controller={controller}/>:<CameraModel controller={controller}/>;
+export default function CollectionModel({id,controller,gameBoyEdition=defaultGameBoyEdition,journalEdition=defaultJournalEdition}:{id:ExhibitId;controller:StudioController;gameBoyEdition?:GameBoyEditionId;journalEdition?:JournalEditionId}) {
+  return id==="002"?<Handheld controller={controller} edition={gameBoyEdition}/>:id==="003"?<Journal controller={controller} edition={journalEdition}/>:<CameraModel controller={controller}/>;
 }
