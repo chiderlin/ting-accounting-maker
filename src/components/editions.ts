@@ -40,3 +40,19 @@ export const gameBoyEditions: readonly GameBoyEdition[] = [
 export function gameBoyEdition(id:GameBoyEditionId) {
   return gameBoyEditions.find(edition=>edition.id===id)!;
 }
+
+export type JournalEditionId = "cognac" | "noir" | "patina";
+export type JournalEdition = EditionChoice<JournalEditionId> & {
+  leather:string; edge:string; lining:string; thread:string; hole:string;
+  hardware:string; hardwareRoughness:number; paper:string; pageEdge:string;
+  ribbon:string; legend:string; roughness:number; grain:number; variation:number; wear:number;
+};
+export const defaultJournalEdition: JournalEditionId = "cognac";
+export const journalEditions: readonly JournalEdition[] = [
+  {id:"cognac",name:"Cognac — Vegetable-tanned Leather",label:"Cognac",swatch:"#a5653a",leather:"#a36438",edge:"#704125",lining:"#c38e61",thread:"#e3bd8c",hole:"#58331e",hardware:"#b79958",hardwareRoughness:.31,paper:"#f0e5cc",pageEdge:"#c9b798",ribbon:"#68724e",legend:"#deb789",roughness:.62,grain:.024,variation:.13,wear:.13},
+  {id:"noir",name:"Noir — Fine-grain Black Leather",label:"Noir",swatch:"#28292b",leather:"#303135",edge:"#171719",lining:"#49474a",thread:"#777477",hole:"#171719",hardware:"#53575a",hardwareRoughness:.36,paper:"#eeeae0",pageEdge:"#c9c5b9",ribbon:"#46464c",legend:"#aaa5a0",roughness:.48,grain:.014,variation:.09,wear:.05},
+  {id:"patina",name:"Vintage Patina — Aged Olive Leather",label:"Patina",swatch:"#62684b",leather:"#626449",edge:"#51432d",lining:"#9a8860",thread:"#b7a27b",hole:"#393727",hardware:"#92713e",hardwareRoughness:.54,paper:"#e9dbb8",pageEdge:"#b9a17e",ribbon:"#926448",legend:"#c5b283",roughness:.73,grain:.038,variation:.28,wear:.42},
+];
+export function journalEdition(id:JournalEditionId) {
+  return journalEditions.find(edition=>edition.id===id)!;
+}
