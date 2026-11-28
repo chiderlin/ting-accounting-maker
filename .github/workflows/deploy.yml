@@ -15,51 +15,21 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout production main
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          path: live
-      - name: Checkout task9 preview
-        uses: actions/checkout@v4
-        with:
-          ref: task9-motion-discussion
-          path: preview
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: |
-            live/package-lock.json
-            preview/package-lock.json
       - uses: actions/configure-pages@v5
-      - name: Install production dependencies
-        run: npm ci
-        working-directory: live
-      - name: Build production homepage
-        run: npm run build
-        working-directory: live
+      - run: npm ci
+      - run: npm run build
         env:
           GITHUB_PAGES: 'true'
           PAGES_BASE_PATH: /ting-accounting-maker
-      - name: Install preview dependencies
-        run: npm ci
-        working-directory: preview
-      - name: Build task9 preview
-        run: npm run build
-        working-directory: preview
-        env:
-          GITHUB_PAGES: 'true'
-          PAGES_BASE_PATH: /ting-accounting-maker/task9
-      - name: Assemble both Pages paths
-        run: |
-          mkdir -p site/task9
-          cp -R live/out/. site/
-          cp -R preview/out/. site/task9/
-          touch site/.nojekyll
+      - run: touch out/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: out
   deploy:
     needs: build
     runs-on: ubuntu-latest
