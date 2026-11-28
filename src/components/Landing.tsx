@@ -6,7 +6,7 @@ import { makerProfile } from "./motion/makerProfile";
 import type { ExhibitId } from "./CollectionModels";
 import type { Settings } from "./MakerConsole";
 import EditionSelector from "./EditionSelector";
-import { defaultMakerEdition, makerEditions, defaultGameBoyEdition, gameBoyEditions, type MakerEditionId, type GameBoyEditionId, defaultJournalEdition, journalEditions, type JournalEditionId } from "./editions";
+import { defaultMakerEdition, makerEditions, defaultGameBoyEdition, gameBoyEditions, type MakerEditionId, type GameBoyEditionId, defaultJournalEdition, journalEditions, type JournalEditionId, defaultCameraEdition, cameraEditions, type CameraEditionId } from "./editions";
 import styles from "./Landing.module.css";
 
 const Scene = dynamic(() => import("./Scene"), { ssr: false, loading: () => <div className={styles.loading}>Preparing object 001…</div> });
@@ -60,6 +60,7 @@ export default function Landing() {
   const [edition, setEdition] = useState<MakerEditionId>(defaultMakerEdition);
   const [gameBoyEdition, setGameBoyEdition] = useState<GameBoyEditionId>(defaultGameBoyEdition);
   const [journalEdition, setJournalEdition] = useState<JournalEditionId>(defaultJournalEdition);
+  const [cameraEdition, setCameraEdition] = useState<CameraEditionId>(defaultCameraEdition);
   const [direction, setDirection] = useState(1);
   const touch = useRef<{x:number;y:number}|null>(null);
   const select = (index:number) => { if(index<0 || index>=exhibits.length || index===active) return; setDirection(index>active?1:-1);setActive(index); };
@@ -104,9 +105,9 @@ export default function Landing() {
           <div className={styles.heroMeta}><span>EXHIBITION / {object.id}</span><span ref={stageLabel}>ASSEMBLED</span></div>
           <h1 className={styles.heroTitle}>The maker’s<br/>studio<span>.</span></h1>
           <div className={styles.canvas}>
-            <div className={styles.slide} key={active} data-direction={direction}><Scene settings={settings} edition={edition} gameBoyEdition={gameBoyEdition} journalEdition={journalEdition} view={view} controller={controller} exhibition exhibit={active===0?undefined:object.id as ExhibitId}/></div>
+            <div className={styles.slide} key={active} data-direction={direction}><Scene settings={settings} edition={edition} gameBoyEdition={gameBoyEdition} journalEdition={journalEdition} cameraEdition={cameraEdition} view={view} controller={controller} exhibition exhibit={active===0?undefined:object.id as ExhibitId}/></div>
           </div>
-          <div className={styles.objectLabel} aria-live="polite"><span>OBJECT — {object.id}</span><strong>{object.name}</strong><span>{object.note}</span>{active===0 && <EditionSelector choices={makerEditions} value={edition} onChange={setEdition}/>} {active===1 && <EditionSelector choices={gameBoyEditions} value={gameBoyEdition} onChange={setGameBoyEdition}/>} {active===2 && <EditionSelector choices={journalEditions} value={journalEdition} onChange={setJournalEdition}/>}</div>
+          <div className={styles.objectLabel} aria-live="polite"><span>OBJECT — {object.id}</span><strong>{object.name}</strong><span>{object.note}</span>{active===0 && <EditionSelector choices={makerEditions} value={edition} onChange={setEdition}/>} {active===1 && <EditionSelector choices={gameBoyEditions} value={gameBoyEdition} onChange={setGameBoyEdition}/>} {active===2 && <EditionSelector choices={journalEditions} value={journalEdition} onChange={setJournalEdition}/>} {active===3 && <EditionSelector choices={cameraEditions} value={cameraEdition} onChange={setCameraEdition}/>}</div>
           <div className={styles.galleryControls} aria-label="Choose exhibit"><button aria-label="Previous object" disabled={active===0} onClick={()=>select(active-1)}>←</button>{exhibits.map((item,i)=><button key={item.id} aria-label={item.name} aria-pressed={active===i} onClick={()=>select(i)}>{item.id}</button>)}<button aria-label="Next object" disabled={active===exhibits.length-1} onClick={()=>select(active+1)}>→</button></div>
           <div className={styles.hints}><span>{reduced ? "STATIC EXHIBITION" : "DRAG TO ROTATE"}</span><a href="#about">SCROLL TO EXPLORE ↓</a></div>
           <div className={styles.progress} aria-hidden="true"><span ref={indicator}/></div>
